@@ -1,0 +1,64 @@
+version: '3.8'
+
+networks:
+  pimienta_net:
+    driver: bridge
+
+services:
+  wiki:
+    image: mediawiki:latest
+    container_name: pimienta-wiki
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - wiki_data:/var/www/html/images
+      - ./LocalSettings.php:/var/www/html/LocalSettings.php
+    depends_on:
+      - db
+    networks:
+      - pimienta_net
+
+  db:
+    image: mariadb:latest
+    container_name: pimienta-wiki-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rcfr_2026_ros4
+      MYSQL_DATABASE: my_wiki
+      MYSQL_USER: wikiuser
+      MYSQL_PASSWORD: rcfr_ros4_2026
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - pimienta_net
+
+  chat:
+    image: rocketchat/rocket.chat:latest
+    container_name: pimienta-chat
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      MONGO_URL: "mongodb://mongo:27017/rocketchat"
+      MONGO_OPLOG_URL: "mongodb://mongo:27017/local"
+      ROOT_URL: "http://localhost:3000"
+    depends_on:
+      - mongo
+    networks:
+      - pimienta_net
+
+  mongo:
+    image: mongo:latest
+    container_name: pimienta-chat-db
+    restart: unless-stopped
+    command: mongod --replSet rs0 --bind_ip_all
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - pimienta_net
+
+volumes:
+  wiki_data:
+  db_data:
+  mongo_data:
