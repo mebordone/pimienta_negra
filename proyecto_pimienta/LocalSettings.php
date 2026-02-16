@@ -32,7 +32,7 @@ $wgMetaNamespace = "Wiki_Pimienta";
 $wgScriptPath = "";
 
 ## The protocol and server name to use in fully-qualified URLs
-$wgServer = "http://localhost:8080";
+$wgServer = "http://192.168.0.170:8080";
 
 ## El path debe estar vacío si usas el puerto 8080 directamente
 $wgScriptPath = "";

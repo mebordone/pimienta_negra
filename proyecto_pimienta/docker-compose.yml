@@ -49,10 +49,9 @@ services:
       - pimienta_net
 
   mongo:
-    image: mongo:latest
+    image: mongo:4.4.18
     container_name: pimienta-chat-db
     restart: unless-stopped
-    command: mongod --replSet rs0 --bind_ip_all
     volumes:
       - mongo_data:/data/db
     networks:
