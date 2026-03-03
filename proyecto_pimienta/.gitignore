@@ -1,0 +1,10 @@
+# Ignorar TODA la carpeta data (donde viven las bases de datos y llaves)
+data/
+
+# Pero NO ignores el archivo de configuración de la Wiki
+!data/mediawiki/LocalSettings.php
+
+# Ignorar otros archivos basura
+*.tmp
+.DS_Store
+*.key

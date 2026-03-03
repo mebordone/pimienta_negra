@@ -61,10 +61,10 @@ $wgEmailAuthentication = true;
 
 ## Database settings
 $wgDBtype = "mysql";
-$wgDBserver = "pimienta-wiki-db";
+$wgDBserver = "db";
 $wgDBname = "my_wiki";
-$wgDBuser = "wikiuser";
-$wgDBpassword = "rcfr_ros4_2026";
+$wgDBuser = "root";
+$wgDBpassword = "pimienta_rosa";
 
 # MySQL specific settings
 $wgDBprefix = "";
@@ -157,3 +157,4 @@ $wgEnableUploads = true;
 
 wfLoadSkin( 'MinervaNeue' );
 # -------------------------------
+$wgShowExceptionDetails = true;
