@@ -1,4 +1,31 @@
 # Proyecto Pimienta Rosa
+
+## Modo C (Wiki con contenido + Chat limpio)
+Este modo apunta a usuarios nuevos:
+- la **Wiki** se levanta con contenido guardado (restore del dump incluido)
+- el **Chat (Synapse)** arranca funcional pero **sin restaurar conversaciones** (solo genera config de inicio)
+
+### Pasos
+1. Entrar al directorio del stack:
+   - `cd proyecto_pimienta`
+2. Inicializar configuración de Synapse (genera `./data/synapse/homeserver.yaml`):
+   - `./ops/init-synapse.sh`
+3. Levantar contenedores:
+   - `docker compose up -d`
+4. Restaurar contenido de la Wiki:
+   - `./ops/restore-wiki.sh`
+   - (opcional) restaurar desde un backup `.tar.gz` generado por `./ops/backup-wiki.sh`:
+     - `./ops/restore-wiki.sh --backup ./backups/wiki/exports/wiki-backup-<fecha>.tar.gz`
+   - (opcional) indicar un dump alternativo (compatibilidad): `./ops/restore-wiki.sh --dump ./backups/wiki/copia_wiki_real.sql`
+
+### Verificación rápida
+- Wiki: `http://pimienta.local:8080/index.php/P%C3%A1gina_principal` (debería cargar con páginas existentes)
+- Chat: `http://pimienta.local:8008/_matrix/client/versions` (debería devolver `200`)
+
+### Notas
+- El restore de la Wiki incluye un preprocesado del SQL (filtra `USE \`my_wiki\`;` y ajusta collations) para compatibilizar con la MariaDB usada en este stack.
+- El backup de la Wiki (`./ops/backup-wiki.sh`) genera un `.tar.gz` que incluye `LocalSettings.php` y `images/` (uploads) para conservar estética y contenido.
+- Si estás probando en una máquina que ya tenía el chat levantado antes y querés “volver a vacío”, borrá `./data/postgres` y `./data/synapse` antes de ejecutar el modo C.
 Entorno autohospedado con Docker que combina una wiki colaborativa (MediaWiki) y un servidor de chat federado (Matrix Synapse). 
 Componentes 
 1. Wiki Pimienta (MediaWiki) 
