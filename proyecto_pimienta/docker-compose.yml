@@ -10,6 +10,7 @@ services:
       - MYSQL_DATABASE=my_wiki
       - MYSQL_USER=wikiuser
       - MYSQL_PASSWORD=wikipassword
+    command: ["--innodb-large-prefix=ON", "--innodb-file-format=Barracuda"]
     volumes:
       - db_data:/var/lib/mysql
 
@@ -25,7 +26,8 @@ services:
       - MW_DB_USER=wikiuser
       - MW_DB_PASS=wikipassword
     volumes:
-      - ./data/mediawiki/LocalSettings.php:/var/www/html/LocalSettings.php
+      - ./config/mediawiki/LocalSettings.php:/var/www/html/LocalSettings.php
+      - ./data/mediawiki/images:/var/www/html/images
     depends_on:
       - db
 
