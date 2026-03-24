@@ -37,9 +37,9 @@ Este documento describe las funcionalidades planificadas para el nodo Pimienta R
 - **Descripción**: página inicial minimalista que aparece al abrir `http://pimienta.local` (sin puerto).
 - **Objetivo**: ofrecer una entrada clara y simple a todos los servicios del nodo.
 - **Elementos mínimos**:
-  - Botón **“Entrar a la Wiki”**.
-  - Botón **“Entrar al Chat”**.
-  - Botón **“Archivos compartidos”**.
+  - Botón **"Entrar a la Wiki"**.
+  - Botón **"Entrar al Chat"**.
+  - Botón **"Archivos compartidos"**.
   - Enlaces secundarios: **Estado del nodo**, **Administración** (con contraseña).
   - Texto breve explicando qué es Pimienta Rosa y qué datos se almacenan.
 - **Tareas**:
@@ -82,7 +82,7 @@ Este documento describe las funcionalidades planificadas para el nodo Pimienta R
       - `wiki/files/LocalSettings.php` (branding/config de la Wiki)
       - `wiki/files/images/` (uploads/imágenes para conservar estética y contenido)
       - `manifest.json` (metadatos del backup)
-  - Integrar botón “Hacer backup ahora” en el panel web de administración (opcional, queda para iteraciones futuras).
+  - Integrar botón "Hacer backup ahora" en el panel web de administración (opcional, queda para iteraciones futuras).
 
 ### 4.2. Restauración sencilla (misma Pi u otra)
 
@@ -99,7 +99,7 @@ Este documento describe las funcionalidades planificadas para el nodo Pimienta R
     - Vuelve a levantar `wiki` y corre `maintenance/update.php --quick` (caches/esquema).
   - Modo C (Wiki con contenido + Chat limpio):
     - El usuario debe ejecutar `./proyecto_pimienta/ops/init-synapse.sh` y **no** restaurar conversaciones del chat.
-  - Documentar el proceso paso a paso para personas no técnicas (ver sección de “Modo C” en `README.md`).
+  - Documentar el proceso paso a paso para personas no técnicas (ver sección de "Modo C" en `README.md`).
 
 ### 4.3. Backups automáticos (opcional)
 
@@ -112,63 +112,56 @@ Este documento describe las funcionalidades planificadas para el nodo Pimienta R
 
 ## 5. Portal de archivos compartidos
 
+> **Decisión de diseño**: en lugar de desarrollar un portal de archivos propio, se adopta
+> [FileBrowser](https://filebrowser.org/) como solución. Es un proyecto open-source, liviano
+> (~50 MB RAM), con interfaz web amigable y permisos granulares por usuario. Se despliega como
+> un contenedor Docker más dentro del stack existente, evitando esfuerzo de desarrollo y
+> mantenimiento a largo plazo.
+
 ### 5.1. Carpeta dedicada y fuentes de almacenamiento
 
 - **Objetivo**: ofrecer un espacio sencillo para compartir archivos en la red local, sin exponer archivos del sistema.
-- **Características**:
-  - Carpeta dedicada exclusiva para compartición (no se exponen archivos del sistema ni de otros servicios).
-  - Ruta configurable:
-    - Una carpeta del sistema (por ejemplo `/datos/public`).
-    - Un pendrive montado (por ejemplo `/media/pendrive1`), permitiendo compartir y guardar archivos directamente en el USB.
+- **Implementación con FileBrowser**:
+  - Se monta una carpeta del host como volumen `/srv` dentro del contenedor.
+  - Ruta configurable según el despliegue:
+    - Una carpeta del sistema (por ejemplo `./archivos`).
+    - Un pendrive montado (por ejemplo `/media/pendrive1`), cambiando el bind mount en `docker-compose.yml`.
   - Los archivos compartidos **no** se incluyen en los backups del sistema.
+- **Tareas**:
+  - Agregar servicio `filebrowser` al `docker-compose.yml` (puerto 8081).
+  - Crear archivo de configuración inicial (`filebrowser/settings.json`).
+  - Documentar cómo cambiar la carpeta compartida (SD vs. pendrive).
 
-### 5.2. Operaciones para personas usuarias (anónimas)
+### 5.2. Operaciones para personas usuarias
 
-- **Permitido**:
-  - Subir archivos (upload).
-  - Descargar archivos.
-  - Crear carpetas.
-- **No permitido**:
-  - Borrar archivos.
-  - Renombrar archivos o carpetas.
-  - Mover/cortar/pegar.
-- **Previsualización**:
-  - Opcional y solo para archivos pequeños (por ejemplo imágenes o PDFs ligeros).
-  - Para archivos grandes, solo se permite descarga para no sobrecargar la Raspberry.
+- **Resuelto mediante roles de FileBrowser**:
+  - Crear un usuario `invitado` (contraseña pública, ej. `invitado`/`invitado`) con permisos restringidos:
+    - **Permitido**: subir archivos (upload), descargar archivos, crear carpetas.
+    - **No permitido**: borrar, renombrar, mover archivos o carpetas.
+  - FileBrowser incluye previsualización nativa de imágenes, video, audio, PDF y texto plano.
+- **Alternativa sin login**: se puede arrancar FileBrowser con `--noauth` para acceso totalmente anónimo, pero se pierde la distinción admin/usuario. Evaluar según el contexto de cada nodo.
 
 ### 5.3. Límites y gestión de espacio
 
-- **Límites configurables**:
-  - Tamaño máximo por archivo.
-  - Espacio total máximo utilizado por la carpeta de archivos compartidos.
-- **Comportamiento al alcanzar el límite**:
-  - Rechazar nuevas subidas con un mensaje claro (“No hay espacio disponible en el área de archivos compartidos. Consultá con quien cuida este nodo.”).
-- **Ampliar cuota o hacer excepciones**:
-  - Desde la interfaz de administración, permitir:
-    - Ajustar los límites configurados.
-    - Cambiar la carpeta de destino (por ejemplo a un pendrive más grande).
+- **Tamaño máximo por archivo**: no es nativo de FileBrowser, pero se puede limitar mediante un reverse proxy (nginx) o a nivel de filesystem.
+- **Espacio total máximo**: se resuelve a nivel de infraestructura (partición dedicada, quota de filesystem, o monitoreo desde el panel de admin de la sección 6).
+- **Comportamiento al alcanzar el límite**: el filesystem rechaza la escritura y FileBrowser muestra un error al intentar subir.
 
-### 5.4. Capa de administración del portal de archivos
+### 5.4. Administración del portal de archivos
 
-- **Acceso admin**:
-  - Mediante contraseña sencilla, pensada para personas cuidadoras del nodo.
-- **Permisos admin**:
-  - Borrar archivos y carpetas cuando sea necesario (moderación, limpieza, liberar espacio).
-  - Cambiar ruta base de almacenamiento (SD / pendrive).
-  - Ajustar límites de tamaño y espacio.
-  - Ver uso de espacio y estado general del área de archivos compartidos.
+- **Resuelto con el usuario `admin` de FileBrowser** (credenciales por defecto: `admin`/`admin`, cambiar en el primer ingreso):
+  - Borrar archivos y carpetas (moderación, limpieza, liberar espacio).
+  - Ver uso de espacio desde la propia interfaz.
+  - Gestionar usuarios y permisos.
+- **Cambio de ruta base de almacenamiento**: se modifica el volumen en `docker-compose.yml` y se reinicia el contenedor.
 
 ### 5.5. Interfaz de usuario
 
-- **Para usuarios anónimos**:
-  - Interfaz minimalista en web:
-    - Lista de archivos y carpetas (nombre, tamaño, fecha).
-    - Botón “Subir archivo”.
-    - Botón “Volver al inicio”.
-- **Para administración**:
-  - Vista separada accesible desde la landing:
-    - Listado con controles de borrado.
-    - Información de espacio usado y configuración actual.
+- FileBrowser ya provee una **interfaz web minimalista y responsive** que cumple todos los requisitos:
+  - Lista de archivos y carpetas (nombre, tamaño, fecha).
+  - Botones de subida y descarga.
+  - Panel de administración integrado para el usuario admin.
+  - Soporte de temas y branding básico (personalizable con el nombre del nodo).
 
 ---
 
@@ -176,17 +169,17 @@ Este documento describe las funcionalidades planificadas para el nodo Pimienta R
 
 - **Objetivo**: que las operaciones críticas no requieran usar la terminal.
 - **Funciones deseables**:
-  - Sección “Sistema”:
+  - Sección "Sistema":
     - Ver estado de servicios (Wiki, Chat, Portal de archivos).
     - Ver espacio libre aproximado en disco.
-  - Sección “Backups”:
+  - Sección "Backups":
     - Hacer backup ahora.
     - Ver fecha del último backup.
     - Iniciar flujo de restauración (con advertencias claras).
-  - Sección “Red”:
+  - Sección "Red":
     - Mostrar modo actual (AP / Nodo de red).
     - Mostrar IP actual.
-  - Sección “Archivos compartidos”:
+  - Sección "Archivos compartidos":
     - Ver y borrar archivos/carpeta.
     - Cambiar ruta base y límites de espacio.
 
@@ -211,7 +204,7 @@ Este documento describe las funcionalidades planificadas para el nodo Pimienta R
 
 - **Objetivo**: ofrecer dos caminos de instalación, uno pensado para personas más técnicas y otro para usuarias finales, ambos convergiendo en la configuración vía asistente web.
 
-### 8.1. Camino “avanzado”: script sobre Raspberry Pi OS
+### 8.1. Camino "avanzado": script sobre Raspberry Pi OS
 
 - **Flujo previsto**:
   - La persona graba una imagen oficial de **Raspberry Pi OS** en una SD.
@@ -225,7 +218,7 @@ Este documento describe las funcionalidades planificadas para el nodo Pimienta R
   - Levantar los servicios con `docker compose`.
   - Dejar habilitado el asistente web de primer arranque en `http://pimienta.local` o en la IP correspondiente.
 
-### 8.2. Camino “súper simple”: imagen prearmada para SD
+### 8.2. Camino "súper simple": imagen prearmada para SD
 
 - **Flujo previsto**:
   - La persona descarga una **imagen de Pimienta** (Raspberry Pi OS + nodo ya instalado).
@@ -233,9 +226,9 @@ Este documento describe las funcionalidades planificadas para el nodo Pimienta R
   - Inserta la SD en la Raspberry y la enciende.
   - Sin usar consola, abre `http://pimienta.local` y completa el asistente web de primer arranque.
 - **Cómo generar la imagen (visión inicial)**:
-  - Preparar una Raspberry “maestra” con Raspberry Pi OS + script de instalación ejecutado.
+  - Preparar una Raspberry "maestra" con Raspberry Pi OS + script de instalación ejecutado.
   - Probar que Pimienta funciona correctamente.
-  - Crear una imagen de esa SD (“golden image”) para distribución.
+  - Crear una imagen de esa SD ("golden image") para distribución.
   - A futuro, evaluar herramientas como `pi-gen` para automatizar la generación de imágenes reproducibles.
 
 ---
@@ -257,4 +250,3 @@ Este documento describe las funcionalidades planificadas para el nodo Pimienta R
   - Integrar este asistente para que:
     - Se muestre al primer arranque.
     - Pueda relanzarse desde el panel de administración si se quiere reconfigurar el nodo.
-
