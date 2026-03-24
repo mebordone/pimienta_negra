@@ -1,66 +1,123 @@
-# Proyecto Pimienta Rosa
+# Pimienta Negra
 
-## Modo C (Wiki con contenido + Chat limpio)
-Este modo apunta a usuarios nuevos:
-- la **Wiki** se levanta con contenido guardado (restore del dump incluido)
-- el **Chat (Synapse)** arranca funcional pero **sin restaurar conversaciones** (solo genera config de inicio)
+Fork de [Proyecto Aguaribay (Pimienta Rosa)](https://github.com/mebordone/pimienta_negra) que extiende el nodo comunitario autohospedado con herramientas de operación, backup y un portal de archivos.
 
-### Pasos
-1. Entrar al directorio del stack:
-   - `cd proyecto_pimienta`
-2. Inicializar configuración de Synapse (genera `./data/synapse/homeserver.yaml`):
-   - `./ops/init-synapse.sh`
-3. Levantar contenedores:
-   - `docker compose up -d`
-4. Restaurar contenido de la Wiki:
-   - `./ops/restore-wiki.sh`
-   - (opcional) restaurar desde un backup `.tar.gz` generado por `./ops/backup-wiki.sh`:
-     - `./ops/restore-wiki.sh --backup ./backups/wiki/exports/wiki-backup-<fecha>.tar.gz`
-   - (opcional) indicar un dump alternativo (compatibilidad): `./ops/restore-wiki.sh --dump ./backups/wiki/copia_wiki_real.sql`
+## Qué es Aguaribay (proyecto original)
 
-### Verificación rápida
-- Wiki: `http://pimienta.local:8080/index.php/P%C3%A1gina_principal` (debería cargar con páginas existentes)
+Aguaribay es un nodo comunitario que corre sobre una Raspberry Pi y ofrece dos servicios mediante Docker:
+
+- **Wiki Pimienta** (MediaWiki + MariaDB) -- una Wikipedia local para documentar y compartir saberes de la comunidad.
+- **Chat Soberano** (Matrix Synapse + PostgreSQL) -- un servidor de mensajería federado, compatible con clientes como Element.
+
+El objetivo es que una comunidad pueda tener su propia infraestructura de comunicación y conocimiento, sin depender de plataformas externas ni de conectividad a Internet.
+
+## Qué agrega Pimienta Negra
+
+Este fork incorpora:
+
+- **Backup y restauración de la Wiki** -- scripts (`ops/backup-wiki.sh`, `ops/restore-wiki.sh`) que generan y restauran paquetes `.tar.gz` con la base de datos, `LocalSettings.php` y uploads/imágenes.
+- **Inicialización limpia del Chat** -- script (`ops/init-synapse.sh`) que genera la configuración de Synapse desde una plantilla, para arrancar el chat sin datos previos.
+- **Portal de archivos compartidos** -- integración de [FileBrowser](https://filebrowser.org/) como servicio Docker para subir/bajar archivos en la red local (planificado, ver `Roadmap.md`).
+- **Landing page** -- página de entrada en `http://pimienta.local` con acceso a Wiki, Chat y Archivos (planificado, ver `Roadmap.md`).
+- **Roadmap** -- hoja de ruta con el plan completo de funcionalidades futuras: modos de red, panel de admin, instalador para Raspberry Pi, asistente de primer arranque.
+
+## Objetivo del proyecto
+
+Sensibilizar a la comunidad sobre la importancia de la intranet comunitaria, su rol en la respuesta ante crisis (climática, sanitaria, política) y el acceso a conocimientos compartidos. Concretamente:
+
+- Ofrecer soberanía digital: comunicación y conocimiento sin depender de Internet ni de terceros.
+- Preservar saberes locales en una wiki colaborativa accesible desde la red del barrio/escuela/organización.
+- Facilitar la instalación, el uso y el mantenimiento del nodo a personas con poco o ningún conocimiento técnico.
+
+## Público objetivo
+
+- Comunidades barriales, escolares o rurales que quieran servicios digitales propios.
+- Personas cuidadoras del nodo (admins no técnicas) que necesiten operar el sistema sin usar terminal.
+- Facilitadoras y talleristas que trabajen con comunidades en soberanía tecnológica.
+
+## Estructura del repositorio
+
+```
+proyecto_pimienta/
+├── docker-compose.yml            # Stack: wiki + chat (+ filebrowser a futuro)
+├── config/
+│   ├── mediawiki/
+│   │   ├── LocalSettings.php     # Configuración de MediaWiki
+│   │   └── images/               # Logo y assets de branding
+│   └── synapse/
+│       └── homeserver.yaml.template  # Plantilla para generar config de Synapse
+├── ops/
+│   ├── backup-wiki.sh            # Genera backup .tar.gz de la wiki
+│   ├── restore-wiki.sh           # Restaura wiki desde .tar.gz o .sql
+│   └── init-synapse.sh           # Inicializa Synapse con config limpia
+├── backups/
+│   └── wiki/                     # Dump SQL incluido para restauración inicial
+└── data/                         # Runtime (ignorado por git): DBs, uploads, keys
+```
+
+## Modos de inicio
+
+### Inicio limpio (todo desde cero)
+
+Wiki vacía + Chat vacío. Útil para arrancar un nodo nuevo sin contenido previo.
+
+```bash
+cd proyecto_pimienta
+
+# 1. Inicializar configuración de Synapse
+./ops/init-synapse.sh
+
+# 2. Levantar contenedores
+docker compose up -d
+```
+
+La wiki arranca con la página principal por defecto de MediaWiki y el chat queda listo para crear usuarios.
+
+### Inicio con contenido (wiki restaurada + chat limpio)
+
+Levanta la wiki con contenido previo (base de datos, configuración, uploads/imágenes) y el chat arranca vacío.
+
+```bash
+cd proyecto_pimienta
+
+# 1. Inicializar configuración de Synapse
+./ops/init-synapse.sh
+
+# 2. Levantar contenedores
+docker compose up -d
+
+# 3. Restaurar contenido de la Wiki
+./ops/restore-wiki.sh
+```
+
+Por defecto restaura el dump incluido en el repositorio. Si tenés un backup propio generado con `./ops/backup-wiki.sh`, indicalo así:
+
+```bash
+./ops/restore-wiki.sh --backup ./backups/wiki/exports/wiki-backup-<fecha>.tar.gz
+```
+
+### Verificación
+
+- Wiki: `http://pimienta.local:8080` (debería cargar correctamente)
 - Chat: `http://pimienta.local:8008/_matrix/client/versions` (debería devolver `200`)
 
+## Backup y restauración
+
+### Generar un backup de la Wiki
+
+```bash
+./ops/backup-wiki.sh
+```
+
+Genera un `.tar.gz` en `backups/wiki/exports/` que incluye la base de datos, `LocalSettings.php` y `images/` (uploads).
+
+### Restaurar desde un backup
+
+```bash
+./ops/restore-wiki.sh --backup ./backups/wiki/exports/wiki-backup-<fecha>.tar.gz
+```
+
 ### Notas
-- El restore de la Wiki incluye un preprocesado del SQL (filtra `USE \`my_wiki\`;` y ajusta collations) para compatibilizar con la MariaDB usada en este stack.
-- El backup de la Wiki (`./ops/backup-wiki.sh`) genera un `.tar.gz` que incluye `LocalSettings.php` y `images/` (uploads) para conservar estética y contenido.
-- Si estás probando en una máquina que ya tenía el chat levantado antes y querés “volver a vacío”, borrá `./data/postgres` y `./data/synapse` antes de ejecutar el modo C.
-Entorno autohospedado con Docker que combina una wiki colaborativa (MediaWiki) y un servidor de chat federado (Matrix Synapse). 
-Componentes 
-1. Wiki Pimienta (MediaWiki) 
-Wiki basada en MediaWiki (el mismo software que Wikipedia).
-Base de datos MariaDB.
-Acceso por puerto 8080 (configurado en LocalSettings.php como http://192.168.0.170:8080). 
-2. Chat soberano (Matrix Synapse) 
-Servidor de mensajería Matrix Synapse (chat federado, compatible con clientes como Element).
-Base de datos PostgreSQL.
-Servicio en puerto 8008.
-Nombre del servidor: AguaribayPI. 
-Estructura del proyecto 
-docker-compose.yml: define los servicios (wiki + db, synapse + db_matrix).
-LocalSettings.php: configuración de MediaWiki (nombre del sitio “Wiki Pimienta”, BD, logo, etc.).
-assets/backups: copias de seguridad (SQL de la wiki, etc.).
-Archivos de backup (.tar.gz, .sql): datos de wiki, base de datos y respaldos históricos. 
-Resumen 
-Wiki colaborativa + servidor de chat Matrix montados con Docker bajo el nombre Pimient.
 
-3. Objetivo: Sensibilizar a la comunidad sobre la importancia de la intranet, su rol en la respuesta ante crisis y el acceso a conocimientos compartidos.
-   
-Contenido:
-
-Qué es una intranet comunitaria y cómo puede ayudar en momentos de crisis (climática, sanitaria, política).
-El valor de una Wikipedia local para almacenar y difundir saberes locales.
-Funciones de la radio como herramienta complementaria.
-Método: Talleres participativos, charlas comunitarias, uso de ejemplos de otras comunidades que ya han implementado proyectos similares.
-
-Fase: Fundamentos Técnicos
-
-Objetivo: Enseñar los conceptos básicos de redes, servidores y conectividad, de manera accesible.
-a. Guías y Manuales
-
-Creación de manuales técnicos adaptados a distintos niveles de conocimiento (principiante, intermedio) para cada fase de la capacitación.
-
-Videos tutoriales que expliquen paso a paso cómo instalar y configurar el servidor y la red de malla.
-
-# Proyecto Pimienta Rosa
+- El restore incluye preprocesado del SQL (filtra por base `my_wiki` y ajusta collations) para compatibilizar con MariaDB 10.5.
+- Para "resetear" el chat, borrá `./data/postgres` y `./data/synapse` antes de correr `init-synapse.sh`.
