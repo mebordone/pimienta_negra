@@ -25,9 +25,8 @@ Opciones:
   --no-update             No ejecutar maintenance/update.php luego del restore
 
 Nota: con --backup, si el tar incluye LocalSettings.php, se copia sobre
-config/mediawiki/LocalSettings.php. El repo usa $wgServer = getenv('MW_SERVER')
-para que coincida con el puerto del gateway; si el backup tiene $wgServer fijo,
-ajustalo o alineá MW_SERVER en .env y recreá el contenedor wiki.
+config/mediawiki/LocalSettings.php. El repo usa MW_SERVER (si está definido) o el
+HTTP_HOST de la petición; si el backup tiene $wgServer fijo, alinealo o recreá wiki.
 EOF
 }
 
@@ -133,15 +132,20 @@ sed \
   -e '/SET [A-Z_]*=@OLD_[A-Z_]*/d' \
   "$dump_path" > "$tmp_pre"
 
-# 1) Nos quedamos solo con las sentencias ejecutadas bajo `USE `my_wiki`;`
-# 2) Evitamos importar tablas del esquema `mysql` que rompen en MariaDB 10.5
-awk '
-  BEGIN { keep=0 }
-  $0 ~ /^USE `my_wiki`;/ { keep=1 }
-  $0 ~ /^USE my_wiki;/ { keep=1 }
-  $0 ~ /^USE `mysql`;/ { keep=0 }
-  { if (keep) print }
-' "$tmp_pre" > "$tmp_sql"
+# 1) Si el dump trae `USE my_wiki`, nos quedamos solo con ese bloque (evita mezclar otros esquemas).
+# 2) Los dumps recientes de `mysqldump my_wiki` a veces no incluyen ninguna línea USE; en ese caso usamos todo el archivo.
+# 3) Evitamos importar sentencias bajo USE de otras bases (p. ej. mysql).
+if grep -qE '^USE (`my_wiki`|my_wiki);' "$tmp_pre"; then
+  awk '
+    BEGIN { keep=0 }
+    $0 ~ /^USE `my_wiki`;/ { keep=1; next }
+    $0 ~ /^USE my_wiki;/ { keep=1; next }
+    $0 ~ /^USE `/ { keep=0; next }
+    { if (keep) print }
+  ' "$tmp_pre" > "$tmp_sql"
+else
+  cp "$tmp_pre" "$tmp_sql"
+fi
 
 if [[ ! -s "$tmp_sql" ]]; then
   echo "Warning: el filtrado por USE my_wiki dejó el SQL vacío. Usando el SQL preprocesado completo." >&2
