@@ -1,0 +1,32 @@
+<div style="text-align:center; margin:0 0 1.25em 0;">[[Archivo:Logo_Wiki_Pimienta.png|centro|sinmarco|200px|alt=Logo Wiki Pimienta]]</div>
+
+👾 '''Bienvenida a esta red local, autónoma y transfeminista''' 🌈👾
+
+== 🔖 ¿Por qué estamos aquí? ==
+
+Esta red no depende de los cables de las grandes empresas ni de los satélites que vigilan. Vive en una pequeña caja (nuestra Raspberry Pi) que late en nuestra serranía. Existe para que nuestros saberes sobre la tierra, las plantas y nuestra organización en Calamuchita no sean mercancía de nadie.
+
+== Nuestros principios ==
+
+* '''Soberanía tecnológica:''' no somos usuarias pasivas; somos maestras de nuestras propias herramientas.
+* '''Memoria territorial:''' aquí guardamos el saber de las plantas y los audios de nuestra historia serrana para que el tiempo no los borre.
+* '''Cuidado colectivo:''' lo que se escribe aquí es para fortalecer nuestra red. Nos cuidamos entre nosotras y cuidamos la red que nos comunica.
+
+----
+<blockquote>''La tecnología es nuestra cuando la entendemos y la ponemos al servicio de la vida en el territorio.''</blockquote>
+
+== Herramientas del nodo ==
+
+Esta página es también el '''punto de partida''' práctico: desde acá podés ir al [[Wiki_Pimienta:Portal de la comunidad|'''portal de la comunidad''']] (índice y documentación del proyecto), al chat y a los archivos compartidos.
+
+{| style="width:100%; max-width:40em; margin:1.25em auto; border-collapse:separate; border-spacing:0.5em; text-align:center;"
+|-
+| style="width:33%; vertical-align:top; padding:1em; background:#f4f4f4; border-radius:12px;" | [[Wiki_Pimienta:Portal de la comunidad|'''Wiki''']]<br /><small>[[Wiki_Pimienta:Portal de la comunidad|Portal de la comunidad]]</small>
+| style="width:33%; vertical-align:top; padding:1em; background:#f4f4f4; border-radius:12px;" | [{{SERVER}}/chat/ '''Chat''']<br /><small>Mensajes en la red local</small>
+| style="width:33%; vertical-align:top; padding:1em; background:#f4f4f4; border-radius:12px;" | [{{SERVER}}/archivos/ '''Archivos''']<br /><small>Subir o bajar archivos</small>
+|}
+
+=== ¿Cómo entro a Archivos? ===
+<div class="mw-collapsible mw-collapsed" style="border:1px solid #ddd; border-radius:8px; padding:0.75em 1em; background:#fafafa;">
+En el portal de archivos, el acceso de invitadx suele ser el que configuró quien cuida el nodo en el archivo <code>.env</code>. En la instalación por defecto del proyecto: usuario <code>pimienta</code> y contraseña <code>pimienta</code> (cambialas en producción).
+</div>
