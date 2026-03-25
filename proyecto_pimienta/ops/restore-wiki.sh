@@ -168,6 +168,9 @@ if [[ "$pages_count" -lt 1 ]]; then
   exit 1
 fi
 
+# El dump puede referenciar [[Archivo:Logo_Wiki_Pimienta.png]] sin el PNG en la ruta con hash.
+"$(dirname "$0")/ensure-portada-logo.sh"
+
 if [[ "$no_update_wiki" == "true" ]]; then
   echo "No se ejecuta update (flag --no-update)."
   exit 0
