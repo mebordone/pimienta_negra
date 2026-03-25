@@ -125,7 +125,13 @@ docker compose exec -T db mysql -u"${mysql_root_user}" -p"${mysql_root_pass}" \
   -e "DROP DATABASE IF EXISTS my_wiki; CREATE DATABASE my_wiki DEFAULT CHARACTER SET utf8mb4 DEFAULT COLLATE utf8mb4_unicode_ci;"
 
 echo "Preprocesando collation UCA (si existe) y filtrando bloque my_wiki..."
-sed 's/utf8mb4_uca1400_ai_ci/utf8mb4_general_ci/g' "$dump_path" > "$tmp_pre"
+# Eliminamos las líneas que restauran variables SET @OLD_* (TIME_ZONE, SQL_MODE, etc.):
+# el awk descarta el encabezado donde se asignan esas variables, por lo que al importar
+# solo el bloque my_wiki valen NULL y MariaDB 10.5 rechaza la sentencia.
+sed \
+  -e 's/utf8mb4_uca1400_ai_ci/utf8mb4_general_ci/g' \
+  -e '/SET [A-Z_]*=@OLD_[A-Z_]*/d' \
+  "$dump_path" > "$tmp_pre"
 
 # 1) Nos quedamos solo con las sentencias ejecutadas bajo `USE `my_wiki`;`
 # 2) Evitamos importar tablas del esquema `mysql` que rompen en MariaDB 10.5
