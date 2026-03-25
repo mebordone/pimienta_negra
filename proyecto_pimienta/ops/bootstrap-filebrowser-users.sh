@@ -32,6 +32,10 @@ if [ ! -f "$DB" ]; then
     --minimumPasswordLength 8
 fi
 
+# Asegurar baseURL /archivos en la DB (puede diferir si el contenedor se inicializó sin settings.json).
+echo "FileBrowser: asegurando baseURL /archivos..."
+fb config set --baseURL /archivos -c "$CONFIG" -d "$DB" >/dev/null 2>&1 || true
+
 echo "FileBrowser: asegurando usuario admin..."
 if user_exists admin; then
   fb users update admin \
