@@ -38,10 +38,10 @@ Además, **`/chat/`** la sirve el mismo **nginx** desde el volumen `config/conve
 |------|---------|
 | `/` | MediaWiki |
 | `/archivos/` | FileBrowser (sin strip del prefijo; `baseURL=/archivos`) |
-| `/chat/` | Converse.js estático (`config/converse/`) |
-| `/http-bind`, `/xmpp-websocket` | Prosody `:5280` (HTTP plano en red Docker) |
+| `/chat/`, `/chat` | En **puerto 80:** **301 → HTTPS** (mismo host y ruta). En **443:** Converse.js estático (`config/converse/`). |
+| `/http-bind`, `/xmpp-websocket` | Prosody `:5280` (HTTP plano en red Docker); en 80 y 443 según cómo acceda el cliente. |
 
-**Puerto 443 (TLS):** mismas ubicaciones que arriba para **`/chat/`**, **`/http-bind`** y **`/xmpp-websocket`**; el resto de URLs HTTPS se redirige a HTTP para no forzar certificado en wiki y archivos.
+**Puerto 443 (TLS):** **`/chat/`** sirve estáticos; **`/http-bind`** y **`/xmpp-websocket`** igual que en 80; el resto de URLs HTTPS se redirige a HTTP para no forzar certificado en wiki y archivos.
 
 ## Datos persistentes (volumen / host)
 

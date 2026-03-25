@@ -8,7 +8,7 @@ Desde `proyecto_pimienta/`:
 ./ops/verify-stack.sh
 ```
 
-Comprueba HTTP vía gateway (wiki, `/chat/`, `/archivos/`). No valida TLS 443 ni WebSocket en profundidad.
+Comprueba HTTP vía gateway (wiki, `/archivos/`); **`/chat/` en HTTP** redirige a **HTTPS** y el script valida el **200** en `https://…/chat/`. No valida WebSocket en profundidad.
 
 ## Checklist: “¿por qué no entra desde el celular?”
 

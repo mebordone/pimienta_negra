@@ -13,8 +13,10 @@ if [[ -f .env ]]; then
 fi
 
 PORT="${GATEWAY_HTTP_PORT:-80}"
+HTTPS_PORT="${GATEWAY_HTTPS_PORT:-443}"
 HOST="pimienta.local"
 RESOLVE="${HOST}:${PORT}:127.0.0.1"
+RESOLVE_HTTPS="${HOST}:${HTTPS_PORT}:127.0.0.1"
 BODY="$(mktemp -t pimienta_verify.XXXXXX)"
 trap 'rm -f "$BODY"' EXIT
 
@@ -69,8 +71,19 @@ fi
 echo "GET / (tras redirects) -> 200 OK"
 
 code="$(code_and_body "/chat/")"
-[[ "$code" == "200" ]] || fail "GET /chat/ esperaba 200, obtuve ${code}"
-echo "GET /chat/ -> 200"
+[[ "$code" == "301" ]] || [[ "$code" == "302" ]] || fail "GET /chat/ (HTTP) esperaba 301/302 a HTTPS, obtuve ${code}"
+loc_https_chat="$(curl -sS -o /dev/null -w "%{redirect_url}" --resolve "$RESOLVE" \
+  "http://${HOST}:${PORT}/chat/")"
+[[ "$loc_https_chat" == https://* ]] || fail "GET /chat/ debería redirigir a HTTPS, Location: ${loc_https_chat}"
+echo "GET http://${HOST}:${PORT}/chat/ -> ${code} -> ${loc_https_chat}"
+
+code_https="$(curl -sS -k -o "$BODY" -w "%{http_code}" --resolve "$RESOLVE_HTTPS" \
+  "https://${HOST}:${HTTPS_PORT}/chat/")"
+[[ "$code_https" == "200" ]] || fail "GET /chat/ (HTTPS) esperaba 200, obtuve ${code_https}"
+if ! grep -qiE 'DOCTYPE|converse|html' "$BODY" 2>/dev/null; then
+  echo "ADVERTENCIA: el cuerpo de /chat/ (HTTPS) no parece HTML/Converse; revisá manualmente." >&2
+fi
+echo "GET https://${HOST}:${HTTPS_PORT}/chat/ -> 200 OK"
 
 code="$(code_and_body "/archivos/")"
 [[ "$code" == "200" ]] || fail "GET /archivos/ esperaba 200, obtuve ${code}"
@@ -82,8 +95,8 @@ loc_chat="$(curl -sS -o /dev/null -w "%{redirect_url}" --resolve "$RESOLVE" \
 code="$(curl -sS -o /dev/null -w "%{http_code}" --resolve "$RESOLVE" \
   "http://${HOST}:${PORT}/chat")"
 [[ "$code" =~ ^30[12]$ ]] || fail "GET /chat esperaba 301/302, obtuve ${code}"
-[[ "$loc_chat" == *"/chat/"* ]] || fail "GET /chat Location debería apuntar a /chat/, fue: ${loc_chat}"
-echo "GET /chat -> ${code} -> /chat/"
+[[ "$loc_chat" == *"/chat/"* ]] || [[ "$loc_chat" == https://* ]] || fail "GET /chat Location debería apuntar a /chat/ o HTTPS, fue: ${loc_chat}"
+echo "GET /chat -> ${code} -> ${loc_chat}"
 
 loc_arch="$(curl -sS -o /dev/null -w "%{redirect_url}" --resolve "$RESOLVE" \
   "http://${HOST}:${PORT}/archivos")"

@@ -199,13 +199,11 @@ Los detalles de cada bloque siguen en las secciones numeradas más abajo. Para *
 
 > Prioridad alta: reducen fricción inmediata para las personas que usan el nodo. Se implementan **antes** del panel de administración porque mejoran la percepción de producto terminado con bajo esfuerzo de desarrollo.
 
-### 5.1. Redirección automática HTTP → HTTPS en `/chat/`
+### 5.1. Redirección automática HTTP → HTTPS en `/chat/` — *entregado*
 
 - **Problema**: si alguien abre `http://pimienta.local/chat/` (sin HTTPS), `crypto.subtle` no existe y el chat se queda cargando sin ningún mensaje de error comprensible.
-- **Solución**: en el bloque `server :80` de nginx, redirigir `/chat/` a `https://…/chat/` con un `301`. Así la usuaria nunca llega al problema de Web Crypto; el cambio de protocolo es invisible.
-- **Tareas**:
-  - Agregar `return 301 https://$http_host$request_uri;` en `location /chat/` del bloque HTTP.
-  - Verificar que el bloque HTTPS sigue sirviendo `/chat/` como estático.
+- **Solución**: en el bloque `server :80` de nginx, `/chat` y `/chat/` redirigen con **301** a `https://$http_host/…` ([`default.conf`](proyecto_pimienta/config/nginx/default.conf)). El bloque **443** sigue sirviendo Converse en `/chat/` y XMPP en `/http-bind` y `/xmpp-websocket`.
+- **Verificación**: `./ops/verify-stack.sh` comprueba el redirect HTTP→HTTPS y un **200** en `https://…/chat/` (con `-k` por certificado autofirmado).
 
 ### 5.2. Portada de la wiki: bienvenida clara y botones de acceso
 

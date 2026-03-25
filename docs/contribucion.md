@@ -4,6 +4,7 @@
 
 ```
 pimienta_negra/
+├── .gitignore                # Reglas globales (data, .env, archivos/*, venv…)
 ├── README.md                 # Inicio rápido y uso
 ├── Roadmap.md                # Funcionalidades planificadas
 ├── docs/                     # Esta documentación técnica
@@ -12,7 +13,7 @@ pimienta_negra/
     ├── .env.example
     ├── archivos/             # Árbol compartido FileBrowser (contenido local)
     ├── config/               # nginx, prosody, mediawiki, converse, filebrowser
-    ├── data/                 # Persistencia (gran parte en .gitignore)
+    ├── data/                 # Persistencia (ignorada; ver .gitignore en la raíz)
     ├── ops/                  # Scripts operativos (bash/sh)
     └── backups/wiki/         # Dump SQL de referencia (copia_wiki_real.sql)
 ```
@@ -31,7 +32,7 @@ pimienta_negra/
 
 ## Convenciones
 
-- **No commitear** secretos: `.env`, `data/filebrowser/`, volúmenes con contraseñas.  
+- **No commitear** secretos: `proyecto_pimienta/.env`, `proyecto_pimienta/data/`, volúmenes con contraseñas (ver `.gitignore` en la raíz del repo).  
 - **Docker Compose v2:** comando `docker compose` (no el binario antiguo `docker-compose` en documentación nueva).  
 - **Cambios en la wiki “de fábrica”:** editar la instancia o `maintenance/run.php edit`, luego **regenerar** `backups/wiki/copia_wiki_real.sql` si ese dump es la fuente de verdad del repo.  
 - **Commits:** mensajes claros en español o inglés coherente con el historial (tipo *conventional* si el equipo lo usa).

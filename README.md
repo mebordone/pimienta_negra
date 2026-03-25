@@ -39,6 +39,7 @@ Sensibilizar a la comunidad sobre la importancia de la intranet comunitaria, su 
 ## Estructura del repositorio
 
 ```
+.gitignore                        # Qué no versionar (data, .env, archivos/*, etc.)
 docs/                             # Documentación técnica del proyecto (ver docs/README.md)
 Roadmap.md
 README.md
@@ -179,7 +180,7 @@ cp .env.example .env && nano .env   # contraseñas + LAN_MDNS=1
 | URL (vía gateway) | Servicio |
 |-------------------|----------|
 | `http://pimienta.local/` (o `:PUERTO`) | MediaWiki |
-| `https://pimienta.local/chat/` | Converse.js (recomendado; **HTTPS** por Web Crypto). También `http://…/chat/` en desktop si el navegador no exige contexto seguro. |
+| `https://pimienta.local/chat/` | Converse.js (**HTTPS** por Web Crypto). `http://…/chat/` redirige con **301** a HTTPS en el gateway. |
 | `http://pimienta.local/archivos` o `.../archivos/` | FileBrowser (redirige sin barra final) |
 
 Comprobación automática (usa `pimienta.local` con `curl --resolve` hacia `127.0.0.1`, no exige que `/etc/hosts` esté bien en el momento del test):

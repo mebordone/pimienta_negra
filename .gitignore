@@ -1,0 +1,23 @@
+# Pimienta Negra — reglas globales del repo (antes: proyecto_pimienta/.gitignore)
+
+# Datos del stack Docker (BD, uploads, certs, SQLite FileBrowser, etc.)
+proyecto_pimienta/data/
+
+# Entorno Python local (no forma parte del stack Docker)
+proyecto_pimienta/venv/
+__pycache__/
+*.pyc
+
+# Variables locales (contraseñas FileBrowser, Prosody, etc.)
+proyecto_pimienta/.env
+
+# Contenido de FileBrowser en el host (solo se versiona .gitkeep)
+proyecto_pimienta/archivos/*
+!proyecto_pimienta/archivos/.gitkeep
+
+# Otros
+*.tmp
+.DS_Store
+*.key
+
+AGENTS.md
