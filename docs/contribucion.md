@@ -1,0 +1,58 @@
+# Guía para quienes desarrollan o mantienen el proyecto
+
+## Estructura relevante
+
+```
+pimienta_negra/
+├── README.md                 # Inicio rápido y uso
+├── Roadmap.md                # Funcionalidades planificadas
+├── docs/                     # Esta documentación técnica
+└── proyecto_pimienta/
+    ├── docker-compose.yml
+    ├── .env.example
+    ├── archivos/             # Árbol compartido FileBrowser (contenido local)
+    ├── config/               # nginx, prosody, mediawiki, converse, filebrowser
+    ├── data/                 # Persistencia (gran parte en .gitignore)
+    ├── ops/                  # Scripts operativos (bash/sh)
+    └── backups/wiki/         # Dump SQL de referencia (copia_wiki_real.sql)
+```
+
+## Scripts en `ops/` (resumen)
+
+| Script | Uso |
+|--------|-----|
+| `bootstrap-with-restore.sh` | Primer arranque: certificados, compose, restore wiki, opcional mDNS. |
+| `init-chat.sh` | Genera certificados en `data/prosody-certs/`. |
+| `restore-wiki.sh` / `backup-wiki.sh` | Restaurar / empaquetar wiki. |
+| `verify-stack.sh` | Smoke test HTTP del gateway. |
+| `setup-lan-mdns.sh` | Avahi persistente o modo efímero. |
+| `wiki-edit-via-api.sh` | Editar página vía Action API (requiere contraseña Admin wiki). |
+| `bootstrap-filebrowser-users.sh` | Invocado por el contenedor FileBrowser; usuarios admin + invitado. |
+
+## Convenciones
+
+- **No commitear** secretos: `.env`, `data/filebrowser/`, volúmenes con contraseñas.  
+- **Docker Compose v2:** comando `docker compose` (no el binario antiguo `docker-compose` en documentación nueva).  
+- **Cambios en la wiki “de fábrica”:** editar la instancia o `maintenance/run.php edit`, luego **regenerar** `backups/wiki/copia_wiki_real.sql` si ese dump es la fuente de verdad del repo.  
+- **Commits:** mensajes claros en español o inglés coherente con el historial (tipo *conventional* si el equipo lo usa).
+
+## Converse / vendor
+
+- Assets en `config/converse/vendor/`; actualización opcional con `ops/vendor-converse.sh` (requiere red en ese momento).  
+- `index.html`: `jid` para anónimo + `wss`/`ws` según `location.protocol`.
+
+## Nginx
+
+- Un solo archivo principal: `config/nginx/default.conf`.  
+- Cualquier cambio de rutas debe alinearse con FileBrowser (`baseURL`) y con Converse (`assets_path`, WebSocket).
+
+## Pruebas manuales mínimas tras un cambio de infra
+
+1. `http://pimienta.local/` (wiki).  
+2. `https://pimienta.local/chat/` (chat usable).  
+3. `http://pimienta.local/archivos/` (login FileBrowser).  
+4. Opcional: `./ops/verify-stack.sh`.
+
+## Dónde pedir ayuda
+
+Issues o canal acordado por el colectivo que mantenga el fork. Para decisiones de producto amplias, preferir actualizar **Roadmap.md** y enlazar desde aquí si hace falta.
