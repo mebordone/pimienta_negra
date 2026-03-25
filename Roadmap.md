@@ -4,6 +4,42 @@ Este documento describe las funcionalidades planificadas para el nodo Pimienta R
 
 Las secciones están ordenadas según la prioridad de implementación acordada.
 
+**Documentación técnica del repo:** carpeta [docs/](docs/) (arquitectura, decisiones, operación/troubleshooting, guía para quienes desarrollan).
+
+---
+
+## 0. Nodo funcional hoy — checklist y próximos pasos sugeridos
+
+### 0.1. Checklist: de cero a “usable en LAN” (aprendizajes prácticos)
+
+Orden recomendado para quien despliega:
+
+1. **Clonar** el repo y entrar a `proyecto_pimienta/`.
+2. **Copiar** `.env.example` → `.env`; definir contraseñas (`FILEBROWSER_*`, opcional `PROSODY_*`) y, si querés acceso por nombre desde otras máquinas, **`LAN_MDNS=1`**.
+3. **Certificados** (una vez): `./ops/init-chat.sh` (genera `data/prosody-certs/`, necesarios para Prosody y para **HTTPS del chat** en el puerto 443).
+4. **Primer arranque completo:** `./ops/bootstrap-with-restore.sh` (levanta stack, restaura wiki desde `backups/wiki/copia_wiki_real.sql`, instala servicio Avahi si `LAN_MDNS=1`).
+5. **Verificación:** `./ops/verify-stack.sh`.
+6. **En el navegador (PC):**  
+   - Wiki y archivos: **`http://pimienta.local/`** y **`http://pimienta.local/archivos/`** (ajustar puerto si `GATEWAY_HTTP_PORT` ≠ 80).  
+   - Chat: **`https://pimienta.local/chat/`** — aceptar certificado autofirmado; **obligatorio en muchos navegadores/celulares** por Web Crypto (`crypto.subtle`).
+7. **Celular (misma Wi‑Fi):** si no resuelve el nombre, comprobar **mDNS** (`pimienta-mdns`) o entrar por **IP**; si el navegador fuerza HTTPS, el **443** del gateway atiende chat/XMPP y redirige el resto a HTTP.
+8. **Si la IP del nodo cambia (DHCP):** `sudo systemctl restart pimienta-mdns` o `./ops/setup-lan-mdns.sh --install-service` con el script actualizado (redetección de IP al iniciar el servicio).
+
+### 0.2. Próximos pasos del roadmap (prioridad sugerida)
+
+Con el stack **ya operativo**, el esfuerzo incremental más valioso suele ser:
+
+| Orden | Bloque | Por qué |
+|-------|--------|--------|
+| 1 | **§5 Mejoras de UX** (redirección chat HTTPS, portada, navegación, favicon, URLs cortas, MUC persistente) | Bajo esfuerzo, alto impacto: reduce frustración inmediata. |
+| 2 | **§10 Documentación para personas no técnicas** + pegatinas/QR en el nodo | Reduce soporte y errores de URL/puerto. |
+| 3 | **§4.3 Backups automáticos** (cron + retención) | Protege la wiki sin depender de que alguien acuerde ejecutar el script. |
+| 4 | **§6 Panel de administración web** (mínimo: estado de contenedores, espacio en disco, “backup ahora”) | Menos terminal para cuidadoras del nodo. |
+| 5 | **§7 Modos de despliegue** (AP vs nodo en red existente) + **§8 Instalador** | Reproducibilidad en Raspberry y otras máquinas. |
+| 6 | **§9 Asistente web de primer arranque** | Encaja después de tener panel o scripts estables. |
+
+Los detalles de cada bloque siguen en las secciones numeradas más abajo. Para **arquitectura y decisiones ya tomadas**, ver [docs/](docs/).
+
 ---
 
 ## 1. Portal de archivos compartidos (FileBrowser) — *entregado*
@@ -33,7 +69,7 @@ Las secciones están ordenadas según la prioridad de implementación acordada.
 ### 1.2. Operaciones para personas usuarias
 
 - **Resuelto mediante roles de FileBrowser**:
-  - Usuario **`invitado`**: contraseña definida por variable de entorno `FILEBROWSER_INVITADO_PASSWORD` (mínimo 8 caracteres); el bootstrap la aplica en cada arranque. Permisos restringidos:
+  - Usuario de acceso limitado (por defecto **`pimienta`** / **`pimienta`**): `FILEBROWSER_INVITADO_USERNAME` y `FILEBROWSER_INVITADO_PASSWORD` (mínimo 8 caracteres en la clave); el bootstrap la aplica en cada arranque. Permisos restringidos:
     - **Permitido**: subir archivos (upload), descargar archivos, crear carpetas.
     - **No permitido**: borrar, renombrar, mover o modificar archivos (sin `modify`/`rename`/`delete`).
   - FileBrowser incluye previsualización nativa de imágenes, video, audio, PDF y texto plano.
@@ -65,7 +101,11 @@ Las secciones están ordenadas según la prioridad de implementación acordada.
 
 ## 2. Chat soberano (Prosody + Converse.js)
 
-> **Decisión de diseño**: el chat del nodo es **XMPP** con **Prosody** y **Converse.js** en el navegador: bajo consumo de RAM, sesión anónima en LAN opcional, integración detrás del mismo gateway, chat **efímero** en servidor (sin MAM / historial persistente), alineado con privacidad comunitaria.
+> **Decisión de diseño**: se reemplaza Matrix Synapse + PostgreSQL por **Prosody** (servidor XMPP) +
+> **Converse.js** (cliente web). Motivación: Synapse requiere registro obligatorio, consume ~200 MB+ de RAM
+> y necesita PostgreSQL dedicado. Prosody con login anónimo consume ~20 MB, permite que la gente chatee
+> sin crear cuenta y se integra directamente en el navegador. El chat es **efímero** (sin historial
+> persistente), alineado con los valores de privacidad del proyecto.
 
 ### 2.1. Chat (Prosody + Converse.js) — *entregado en el repo*
 
@@ -73,11 +113,11 @@ Las secciones están ordenadas según la prioridad de implementación acordada.
   - Dominio anónimo: `pimienta.local`; cuentas con contraseña y registro abierto en LAN: `accounts.pimienta.local` (admin `admin@accounts.pimienta.local`, contraseña `PROSODY_ADMIN_PASSWORD`).
   - MUC: `conference.pimienta.local`; salas sugeridas **general**, **maestranza**, **asamblea** (se crean al unirse; Converse usa `auto_join_rooms`).
   - Sin MAM (sin historial persistente en servidor).
-  - WebSocket/BOSH TLS en el puerto **5281** interno; el gateway nginx termina `ws://`/`http://` hacia el cliente y habla TLS con Prosody.
+  - WebSocket/BOSH en **HTTP 5280** en la red Docker; **nginx** hace de TLS terminal en **443** para el cliente (`wss://` / BOSH HTTPS) y proxy plano a Prosody (evita problemas de SNI/TLS entre contenedores). Prosody también puede exponer TLS en 5281 para clientes nativos; el chat web del repo usa el gateway.
   - Config: [proyecto_pimienta/config/prosody/prosody.cfg.lua](proyecto_pimienta/config/prosody/prosody.cfg.lua); datos: `data/prosody/`, certificados: `data/prosody-certs/` (generados por [proyecto_pimienta/ops/init-chat.sh](proyecto_pimienta/ops/init-chat.sh)).
-- **Converse.js** (estático + assets en `config/converse/vendor/`, sin CDN en operación): [proyecto_pimienta/config/converse/index.html](proyecto_pimienta/config/converse/index.html), servido bajo `/chat/` por nginx. Actualización de vendor con red: `./ops/vendor-converse.sh`.
+- **Converse.js** (estático en el repo, `vendor/`): [proyecto_pimienta/config/converse/index.html](proyecto_pimienta/config/converse/index.html); uso recomendado en **`https://…/chat/`** por Web Crypto en navegadores.
 - **Tareas** (estado):
-  - Servicios `prosody` y `gateway` (nginx) en [docker-compose.yml](proyecto_pimienta/docker-compose.yml).
+  - Servicios `prosody` y `gateway` (nginx) en [docker-compose.yml](proyecto_pimienta/docker-compose.yml); eliminados Synapse y PostgreSQL del chat.
   - `ops/init-chat.sh` + `ops/prosody-entrypoint.sh` (registro idempotente del admin).
   - Cuenta opcional en `accounts.pimienta.local` vía cliente XMPP (no expuesto aún en la UI de Converse más allá del texto informativo).
 
@@ -95,16 +135,14 @@ Las secciones están ordenadas según la prioridad de implementación acordada.
 - Correo saliente desactivado (`$wgEnableEmail = false`).
 - Skin mobile-friendly: `MinervaNeue` como skin por defecto.
 
-### 3.2. Gateway y rutas — *entregado (infra + contenido wiki)*
+### 3.2. Gateway y rutas — *entregado (infra + contenido wiki de referencia)*
 
-- **Objetivo**: al abrir `http://pimienta.local/` (o el host y puerto que corresponda) se accede a la wiki; enlaces relativos a `/chat/` y `/archivos/`.
+- **Objetivo**: al abrir `http://pimienta.local/` (o el host y puerto que corresponda) se accede a la wiki; archivos en `/archivos/`; chat en **`https://pimienta.local/chat/`** (recomendado) o HTTP en entornos que no exijan contexto seguro.
 - **Reverse proxy**: [proyecto_pimienta/config/nginx/default.conf](proyecto_pimienta/config/nginx/default.conf)
-  - `/` → MediaWiki
-  - `/chat/` → Converse.js estático
-  - `/archivos/` → FileBrowser (`baseURL` `/archivos`; nginx reenvía la ruta con prefijo al contenedor)
-  - `/xmpp-websocket` y `/http-bind` → Prosody:5281 (TLS interno)
+  - **Puerto 80:** `/` → MediaWiki; `/chat/` → Converse; `/archivos/` → FileBrowser (ruta completa `/archivos/` sin strip incorrecto; `baseURL=/archivos`); `/xmpp-websocket` y `/http-bind` → Prosody **:5280** (HTTP interno).
+  - **Puerto 443 (TLS):** mismas rutas de **chat y XMPP** que en 80; el resto redirige a HTTP para no forzar certificado en toda la wiki.
 - **Atajos de desarrollo**: la wiki sigue expuesta en **8080** y FileBrowser en **8081** en el host (opcional).
-- **Contenido de la wiki y dump**: la Página principal enlaza a `http://pimienta.local/chat/` y `http://pimienta.local/archivos/` (ajustable con `MW_SERVER`); el **Portal de la comunidad** (`Wiki_Pimienta:Portal_de_la_comunidad`) ya no enlaza a `localhost:3000` y apunta al chat vía gateway; **Maestranza** y **Bitácora de Maestranza** documentan `docker compose`, MariaDB (`db`), gateway, scripts [proyecto_pimienta/ops/backup-wiki.sh](proyecto_pimienta/ops/backup-wiki.sh) / [restore-wiki.sh](proyecto_pimienta/ops/restore-wiki.sh) y la estructura `archivos/`, `data/`, `config/`, `backups/wiki/`, sin pegar secretos. El estado reflejado en el repo está en [proyecto_pimienta/backups/wiki/copia_wiki_real.sql](proyecto_pimienta/backups/wiki/copia_wiki_real.sql) (regenerado desde la wiki viva).
+- **Wiki (dump `copia_wiki_real.sql`):** portada con enlaces a chat (HTTPS) y archivos; páginas Maestranza/Bitácora/Portal alineadas a MariaDB, `docker compose`, scripts de backup/restore y sin secretos en claro. Mantener coherencia al cambiar URLs o stack.
 
 ---
 
@@ -157,7 +195,100 @@ Las secciones están ordenadas según la prioridad de implementación acordada.
 
 ---
 
-## 5. Panel de administración web
+## 5. Mejoras de experiencia de usuario (UX)
+
+> Prioridad alta: reducen fricción inmediata para las personas que usan el nodo. Se implementan **antes** del panel de administración porque mejoran la percepción de producto terminado con bajo esfuerzo de desarrollo.
+
+### 5.1. Redirección automática HTTP → HTTPS en `/chat/`
+
+- **Problema**: si alguien abre `http://pimienta.local/chat/` (sin HTTPS), `crypto.subtle` no existe y el chat se queda cargando sin ningún mensaje de error comprensible.
+- **Solución**: en el bloque `server :80` de nginx, redirigir `/chat/` a `https://…/chat/` con un `301`. Así la usuaria nunca llega al problema de Web Crypto; el cambio de protocolo es invisible.
+- **Tareas**:
+  - Agregar `return 301 https://$http_host$request_uri;` en `location /chat/` del bloque HTTP.
+  - Verificar que el bloque HTTPS sigue sirviendo `/chat/` como estático.
+
+### 5.2. Portada de la wiki: bienvenida clara y botones de acceso
+
+- **Problema**: la Página Principal arranca con *"MediaWiki se ha instalado."* (texto por defecto) y los enlaces a chat/archivos están al final. Una persona no técnica no sabe qué hacer.
+- **Solución**: rediseñar la portada con enfoque mobile-first:
+  - Eliminar el bloque de bienvenida de MediaWiki.
+  - Tres **botones o tarjetas grandes**: Wiki · Chat · Archivos, cada uno con icono y descripción de una línea.
+  - Credenciales de FileBrowser en una sección aparte ("Ayuda" o "Cómo acceder") para no exponer datos en la primera vista.
+- **Tareas**:
+  - Redactar wikitext de portada con tablas/HTML inline para los botones.
+  - Editar vía `maintenance/run.php edit` o `ops/wiki-edit-via-api.sh`.
+  - Regenerar `copia_wiki_real.sql`.
+
+### 5.3. Navegación entre servicios (wiki ↔ chat ↔ archivos)
+
+- **Problema**: hoy cada servicio es un mundo separado; no hay forma de ir de uno a otro sin saber la URL.
+- **Solución**:
+  - **Wiki**: agregar enlaces en la barra lateral (`MediaWiki:Sidebar`) a `/chat/` y `/archivos/`.
+  - **Chat**: botón flotante o barra superior mínima con links a wiki y archivos (sin romper el modo fullscreen de Converse).
+  - **FileBrowser**: evaluar branding con link de "volver a la wiki" (limitado por la UI de FileBrowser, pero posible con CSS/JS inyectado via proxy o header).
+- **Tareas**:
+  - Editar `MediaWiki:Sidebar` con enlaces.
+  - Evaluar un header HTML mínimo antes del `<script>` de Converse (probado anteriormente; verificar que no rompa fullscreen en v12).
+  - Documentar alternativa de custom branding en FileBrowser.
+
+### 5.4. Favicon e identidad visual
+
+- **Problema**: el chat no tiene favicon propio → errores de mixed content con `favicon.ico` de la wiki. No hay identidad visual consistente entre servicios.
+- **Solución**:
+  - Generar un `favicon.ico` y/o `favicon.png` a partir del logo de la burbuja (`wiki_burbuja_135x135.png`).
+  - Servir el favicon desde nginx para todas las rutas (o por lo menos `/chat/`).
+  - Opcional: meta tags de color (`theme-color`) en el `<head>` del chat para que el celular use los colores del nodo.
+- **Tareas**:
+  - Crear favicon en `config/converse/favicon.ico` (o data-URI en `index.html`).
+  - Agregar `<link rel="icon" …>` en `config/converse/index.html`.
+  - Evaluar un `location = /favicon.ico` global en nginx que sirva el archivo desde la wiki.
+
+### 5.5. URLs cortas en la wiki (Short URLs)
+
+- **Problema**: MediaWiki muestra `/index.php/Página_principal` en la barra del navegador. Confuso para usuarias y feo para compartir.
+- **Solución**: configurar `$wgArticlePath = "/$1"` en `LocalSettings.php` y una regla `try_files` o `rewrite` en nginx que dirija a `index.php`.
+- **Tareas**:
+  - Agregar `$wgArticlePath` y `$wgUsePathInfo` en `LocalSettings.php`.
+  - Ajustar el bloque `location /` de nginx para wiki (verificar que no colisione con `/chat/` y `/archivos/`).
+  - Probar links de edición, historial y páginas especiales.
+
+### 5.6. Salas MUC persistentes y pre-creadas
+
+- **Problema**: las salas se destruyen cuando sale el último participante (`muc_room_default_persistent = false`); errores `No identity or name found` al entrar porque la sala aún no existe.
+- **Solución**:
+  - Cambiar `muc_room_default_persistent = true` en `prosody.cfg.lua`.
+  - Crear un script (o paso en `bootstrap-with-restore.sh`) que haga join como admin a las salas sugeridas (general, maestranza, asamblea) para que existan desde el primer arranque con nombre y descripción.
+- **Tareas**:
+  - Editar `config/prosody/prosody.cfg.lua`.
+  - Script `ops/create-muc-rooms.sh` (o bloque en el entrypoint de Prosody) que use `prosodyctl shell` o stanzas XMPP para crear las salas.
+  - Verificar que `auto_join_rooms` de Converse ya no genere los errores disco/identity.
+
+### 5.7. Fuente Muli y MIME types
+
+- **Problema**: Firefox rechaza la fuente Muli TTF (`downloadable font: rejected by sanitizer`), degradando la tipografía del chat.
+- **Solución**: agregar el MIME type correcto para `.ttf` en la configuración de nginx de `/chat/`.
+- **Tareas**:
+  - Agregar `types { font/ttf ttf; font/woff woff; font/woff2 woff2; }` en el `location /chat/` de ambos bloques (80 y 443).
+  - Alternativa: si la fuente sigue siendo problemática, reemplazar con `system-ui` en un override CSS.
+
+### 5.8. Mejoras de robustez y calidad percibida
+
+- **`$wgShowExceptionDetails = true`** → cambiar a **`false`** en producción (hoy muestra stack traces a cualquier visitante).
+- **Fallback offline del chat**: si Prosody se cae, Converse muestra un error críptico. Evaluar un HTML estático de fallback con mensaje amigable ("el chat está reiniciándose, probá en unos segundos") que nginx sirva cuando el upstream no responde (`error_page 502`).
+- **Colores y logo** en Converse: CSS override en `index.html` para que el chat se sienta visualmente parte del mismo nodo que la wiki (misma paleta, logo en el control box).
+
+### 5.9. Mejoras de mediano plazo
+
+| Mejora | Impacto |
+|--------|---------|
+| **Portal unificado / landing page** (HTML estático en `/`, wiki movida a `/wiki/`) | Entrada clara con botones grandes; no confunde con MediaWiki a quien solo quiere chatear. Requiere cambiar `MW_SERVER` y ajustar nginx. |
+| **Código QR** impreso o en la wiki con la URL del nodo | Cero tipeo desde el celular; ideal para talleres y pegatinas. |
+| **PWA mínima** (`manifest.json` + service worker básico en `/chat/`) | "Instalar" el chat como app en el celular; mejor UX y evita redirecciones HTTPS del navegador. |
+| **Healthcheck / status page** (`/status` en nginx) | Para la cuidadora del nodo, sin terminal: muestra si wiki/chat/archivos responden. |
+
+---
+
+## 6. Panel de administración web — *pendiente*
 
 - **Objetivo**: que las operaciones críticas no requieran usar la terminal.
 - **Funciones deseables**:
@@ -177,9 +308,9 @@ Las secciones están ordenadas según la prioridad de implementación acordada.
 
 ---
 
-## 6. Modos de despliegue de red
+## 7. Modos de despliegue de red
 
-### 6.1. Modo Punto de Acceso (AP)
+### 7.1. Modo Punto de Acceso (AP)
 
 - **Descripción**: la Raspberry Pi crea su propia red WiFi y sirve los servicios del nodo de forma autónoma.
 - **Objetivo**: que el nodo funcione en cualquier lugar (plaza, aula, taller) con solo enchufar la Pi.
@@ -191,7 +322,7 @@ Las secciones están ordenadas según la prioridad de implementación acordada.
   - Script de instalación que configure modo AP (hostapd / NetworkManager + DHCP).
   - Documentar cómo cambiar el nombre de la red si se desea.
 
-### 6.2. Modo Nodo de Red
+### 7.2. Modo Nodo de Red
 
 - **Descripción**: la Raspberry Pi se conecta a una red existente (router de escuela, organización, etc.) y comparte los servicios en esa LAN.
 - **Objetivo**: integrarse donde ya existe infraestructura de red WiFi/Ethernet.
@@ -205,11 +336,11 @@ Las secciones están ordenadas según la prioridad de implementación acordada.
 
 ---
 
-## 7. Instalador para Raspberry Pi
+## 8. Instalador para Raspberry Pi
 
 - **Objetivo**: ofrecer dos caminos de instalación, uno pensado para personas más técnicas y otro para usuarias finales, ambos convergiendo en la configuración vía asistente web.
 
-### 7.1. Camino "avanzado": script sobre Raspberry Pi OS
+### 8.1. Camino "avanzado": script sobre Raspberry Pi OS
 
 - **Flujo previsto**:
   - La persona graba una imagen oficial de **Raspberry Pi OS** en una SD.
@@ -223,7 +354,7 @@ Las secciones están ordenadas según la prioridad de implementación acordada.
   - Levantar los servicios con `docker compose`.
   - Dejar habilitado el asistente web de primer arranque en `http://pimienta.local` o en la IP correspondiente.
 
-### 7.2. Camino "súper simple": imagen prearmada para SD
+### 8.2. Camino "súper simple": imagen prearmada para SD
 
 - **Flujo previsto**:
   - La persona descarga una **imagen de Pimienta** (Raspberry Pi OS + nodo ya instalado).
@@ -238,7 +369,7 @@ Las secciones están ordenadas según la prioridad de implementación acordada.
 
 ---
 
-## 8. Asistente web de primer arranque
+## 9. Asistente web de primer arranque
 
 - **Objetivo**: que la configuración inicial del nodo (modo de red, idioma, etc.) se haga siempre desde una interfaz web mínima, sin necesidad de usar la terminal.
 - **Flujo típico**:
@@ -258,7 +389,7 @@ Las secciones están ordenadas según la prioridad de implementación acordada.
 
 ---
 
-## 9. Documentación para personas no técnicas
+## 10. Documentación para personas no técnicas
 
 - **Objetivo**: que el sistema pueda ser instalado, usado y cuidado por personas con muy poco conocimiento técnico.
 - **Materiales**:
