@@ -1,0 +1,2 @@
+export const __webpack_ids__=["9863"];export const __webpack_modules__={"./node_modules/dayjs/locale/en.js":function(_){_.exports={name:"en",weekdays:"Sunday_Monday_Tuesday_Wednesday_Thursday_Friday_Saturday".split("_"),months:"January_February_March_April_May_June_July_August_September_October_November_December".split("_"),ordinal:function(_){var e=["th","st","nd","rd"],a=_%100;return"["+_+(e[(a-20)%10]||e[a]||e[0])+"]"}}}};
+//# sourceMappingURL=en-js.js.map
