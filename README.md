@@ -66,6 +66,7 @@ proyecto_pimienta/
 │   ├── up-gateway-port80.sh      # Tras liberar :80 en el host, levanta gateway y ejecuta verify-stack
 │   ├── vendor-converse.sh        # Descarga Converse 12 + libsignal a config/converse/vendor/ (requiere red)
 │   ├── setup-hosts.sh            # Agrega pimienta.local a /etc/hosts (una sola vez)
+│   ├── setup-lan-mdns.sh         # mDNS (Avahi) para que la LAN resuelva pimienta*.local
 │   ├── bootstrap-filebrowser-users.sh
 │   └── filebrowser-entrypoint.sh
 ├── backups/
@@ -87,6 +88,8 @@ cd proyecto_pimienta
 El script agrega `127.0.0.1  pimienta.local` a `/etc/hosts` (pide `sudo`). Si ya está configurado, no hace nada. Esto es necesario solo una vez por máquina.
 
 > En un despliegue en Raspberry Pi con mDNS/Avahi (ver secciones 1 y 8 del Roadmap), este paso no sería necesario para los clientes de la red local.
+
+**Otras PCs o celulares en la misma red:** `127.0.0.1` solo sirve en el equipo donde corre Docker. Opciones: DNS estático en el router (`pimienta.local` → IP LAN del servidor), o en **Linux** con Avahi: `./ops/setup-lan-mdns.sh --apply` (anuncia `pimienta.local`, `accounts.pimienta.local`, `conference.pimienta.local`). Con `LAN_MDNS=1` en `.env`, `bootstrap-with-restore.sh` ejecuta `--apply` al final. Pros y contras de cada enfoque: `./ops/setup-lan-mdns.sh --help`.
 
 ### 2. Docker y Docker Compose
 
