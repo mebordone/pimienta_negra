@@ -9,7 +9,7 @@ __pycache__/
 # Variables locales (contraseñas FileBrowser, etc.)
 .env
 
-# Volúmenes de usuario (FileBrowser); solo versionamos .gitkeep
+# Contenido de FileBrowser en el host (solo se versiona .gitkeep)
 archivos/*
 !archivos/.gitkeep
 
