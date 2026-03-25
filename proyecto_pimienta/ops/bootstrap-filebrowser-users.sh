@@ -37,6 +37,10 @@ fi
 echo "FileBrowser: asegurando baseURL /archivos..."
 fb config set --baseURL /archivos -c "$CONFIG" -d "$DB" >/dev/null 2>&1 || true
 
+# Favicon/logo alineados con el gateway (config/filebrowser/branding/img/icons/, volumen /branding).
+echo "FileBrowser: asegurando branding.files /branding..."
+fb config set --branding.files /branding -c "$CONFIG" -d "$DB" >/dev/null 2>&1 || true
+
 echo "FileBrowser: asegurando usuario admin..."
 if user_exists admin; then
   fb users update admin \

@@ -61,6 +61,7 @@ services:
     volumes:
       - ./archivos:/srv
       - ./config/filebrowser:/config
+      - ./config/filebrowser/branding:/branding:ro
       - ./data/filebrowser:/database
       - ./ops/filebrowser-entrypoint.sh:/opt/pimienta/filebrowser-entrypoint.sh:ro
       - ./ops/bootstrap-filebrowser-users.sh:/opt/pimienta/bootstrap-filebrowser-users.sh:ro
@@ -73,6 +74,8 @@ services:
       - "${GATEWAY_HTTPS_PORT:-443}:443"
     volumes:
       - ./config/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./config/nginx/favicon.png:/usr/share/nginx/html/favicon.png:ro
+      - ./config/filebrowser/branding/img/icons:/usr/share/nginx/filebrowser-icons:ro
       - ./config/converse:/usr/share/nginx/html/chat:ro
       - ./data/prosody-certs:/etc/nginx/certs:ro
     depends_on:
