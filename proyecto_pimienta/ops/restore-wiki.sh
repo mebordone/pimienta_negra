@@ -23,6 +23,11 @@ Opciones:
   --backup <tar.gz>      Backup wiki en .tar.gz (estructura wiki/sql/dump.sql + wiki/files/*)
   --mysql-root-pass <p>   Password de root en MariaDB (default: $MYSQL_ROOT_PASS o pimienta_rosa)
   --no-update             No ejecutar maintenance/update.php luego del restore
+
+Nota: con --backup, si el tar incluye LocalSettings.php, se copia sobre
+config/mediawiki/LocalSettings.php. El repo usa $wgServer = getenv('MW_SERVER')
+para que coincida con el puerto del gateway; si el backup tiene $wgServer fijo,
+ajustalo o alineá MW_SERVER en .env y recreá el contenedor wiki.
 EOF
 }
 

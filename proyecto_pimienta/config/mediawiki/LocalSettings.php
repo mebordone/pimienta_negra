@@ -32,7 +32,7 @@ $wgMetaNamespace = "Wiki_Pimienta";
 $wgScriptPath = "";
 
 ## The protocol and server name to use in fully-qualified URLs
-$wgServer = "http://pimienta.local:8080";
+$wgServer = getenv( 'MW_SERVER' ) ?: 'http://pimienta.local';
 
 ## El path debe estar vacío si usas el puerto 8080 directamente
 $wgScriptPath = "";
@@ -49,7 +49,7 @@ $wgLogos = [
 
 ## UPO means: this is also a user preference option
 
-$wgEnableEmail = true;
+$wgEnableEmail = false;
 $wgEnableUserEmail = true; # UPO
 
 $wgEmergencyContact = "";
@@ -157,4 +157,7 @@ $wgEnableUploads = true;
 
 wfLoadSkin( 'MinervaNeue' );
 # -------------------------------
+# LAN / sin Internet: refuerzo explícito (InstantCommons y pingback ya están en false arriba).
+$wgAllowExternalImages = false;
+
 $wgShowExceptionDetails = true;
