@@ -74,50 +74,60 @@ proyecto_pimienta/
 └── data/                         # Runtime (ignorado por git): DBs, prosody, certs, filebrowser, imágenes
 ```
 
-## Requisitos previos
+## Inicio rápido (3 pasos)
 
-### 1. Resolución de `pimienta.local`
-
-Los servicios generan URLs con el hostname `pimienta.local`. Para que funcionen en tu máquina, ejecutá:
+> Requiere: **Docker + Docker Compose** y **git** instalados.  
+> En Debian/Ubuntu: `sudo apt install docker.io docker-compose-plugin avahi-daemon avahi-utils git`
 
 ```bash
-cd proyecto_pimienta
-./ops/setup-hosts.sh
+# 1. Clonar
+git clone https://github.com/mebordone/pimienta_negra
+cd pimienta_negra/proyecto_pimienta
+
+# 2. Configurar contraseñas y acceso LAN
+cp .env.example .env
+nano .env          # Editá FILEBROWSER_*_PASSWORD y descomentá LAN_MDNS=1
+
+# 3. Primer arranque (hace todo: certificados, Docker, wiki, mDNS LAN)
+./ops/bootstrap-with-restore.sh
 ```
 
-El script agrega `127.0.0.1  pimienta.local` a `/etc/hosts` (pide `sudo`). Si ya está configurado, no hace nada. Esto es necesario solo una vez por máquina.
+Con **`LAN_MDNS=1`** en `.env`, el paso 3 instala automáticamente un servicio **systemd persistente** que publica `pimienta.local` en la red via Avahi: funciona desde el arranque del sistema, sin correr nada extra. Desde cualquier celular u otra PC en la misma Wi‑Fi podés abrir directamente `http://pimienta.local/`.
 
-> En un despliegue en Raspberry Pi con mDNS/Avahi (ver secciones 1 y 8 del Roadmap), este paso no sería necesario para los clientes de la red local.
+---
 
-**Otras PCs o celulares en la misma red:** `127.0.0.1` solo sirve en el equipo donde corre Docker. Opciones: DNS estático en el router (`pimienta.local` → IP LAN del servidor), o en **Linux** con Avahi: `./ops/setup-lan-mdns.sh --apply` (anuncia `pimienta.local`, `accounts.pimienta.local`, `conference.pimienta.local`). Con `LAN_MDNS=1` en `.env`, `bootstrap-with-restore.sh` ejecuta `--apply` al final. Pros y contras de cada enfoque: `./ops/setup-lan-mdns.sh --help`.
+## Requisitos previos
 
-### 2. Docker y Docker Compose
-
-Necesitás Docker y Docker Compose instalados. En Linux:
+### Docker y Docker Compose
 
 ```bash
 docker --version && docker compose version
 ```
 
-## Modos de inicio
+En Debian/Ubuntu: `sudo apt install docker.io docker-compose-plugin`
 
-### Variables de entorno (gateway, wiki, FileBrowser, Prosody)
+### Acceso desde otros dispositivos (LAN_MDNS)
 
-- **`GATEWAY_HTTP_PORT`** (opcional): puerto del nginx en el host; por defecto **80**. Si el puerto 80 está ocupado, usá por ejemplo `8088` (`export GATEWAY_HTTP_PORT=8088` o en `.env`).
-- **`MW_SERVER`**: URL base de la wiki tal como la ven los navegadores (por defecto `http://pimienta.local`). **Si el gateway no está en el puerto 80**, tenés que incluir el puerto en `MW_SERVER` (ej. `http://pimienta.local:8088`); si no, las redirecciones de MediaWiki apuntan al host equivocado. Ejemplo listo para copiar en [proyecto_pimienta/.env.example](proyecto_pimienta/.env.example).
-- **FileBrowser**: `FILEBROWSER_ADMIN_PASSWORD` y `FILEBROWSER_INVITADO_PASSWORD` (mínimo **8 caracteres**). Sin definir, el compose usa valores **solo para pruebas**.
-- **Prosody**: `PROSODY_ADMIN_PASSWORD` para la cuenta **`admin@accounts.pimienta.local`** (moderación / cliente XMPP). Por defecto de prueba: `pimienta_prosody_admin`.
+Con `LAN_MDNS=1` en `.env` el bootstrap instala un servicio systemd usando **Avahi** que anuncia `pimienta.local`, `accounts.pimienta.local` y `conference.pimienta.local` en la Wi‑Fi. Requisito: `avahi-daemon` y `avahi-utils` instalados (`sudo apt install avahi-daemon avahi-utils`).
 
-Podés exportar las variables antes de `docker compose up` o copiar [proyecto_pimienta/.env.example](proyecto_pimienta/.env.example) a `proyecto_pimienta/.env`.
+Otras opciones: DNS en el router o solo IP; detalles en `./ops/setup-lan-mdns.sh --help`.
 
-En cada arranque de FileBrowser se ejecuta un bootstrap que **crea o actualiza** los usuarios **`admin`** e **`invitado`**. Los datos de FileBrowser viven en `data/filebrowser/` (ignorado por git).
+### Variables de entorno
 
-**Permisos en el host:** FileBrowser corre como UID **1000**. Si fallan escrituras en `./archivos` o `./data/filebrowser`, probá:  
-`sudo chown -R 1000:1000 archivos data/filebrowser` (desde `proyecto_pimienta/`).
+Copiá [proyecto_pimienta/.env.example](proyecto_pimienta/.env.example) a `proyecto_pimienta/.env`:
 
-**Prosody:** antes del **primer** arranque ejecutá `./ops/init-chat.sh`: genera certificados en `data/prosody-certs/` y ajusta permisos de `data/prosody` (UID **100** del contenedor).
+| Variable | Default | Descripción |
+|----------|---------|-------------|
+| `GATEWAY_HTTP_PORT` | `80` | Puerto nginx en el host. Si el 80 está ocupado usá otro (ej `8088`) y mismo número en `MW_SERVER`. |
+| `MW_SERVER` | `http://pimienta.local` | URL base de la wiki. Si el gateway no está en el 80, incluí el puerto (ej `http://pimienta.local:8088`). |
+| `FILEBROWSER_ADMIN_PASSWORD` | valor de prueba | Mínimo 8 caracteres. |
+| `FILEBROWSER_INVITADO_PASSWORD` | valor de prueba | Mínimo 8 caracteres. |
+| `PROSODY_ADMIN_PASSWORD` | valor de prueba | Cuenta `admin@accounts.pimienta.local`. |
+| `LAN_MDNS` | `0` | Poné `1` para instalar servicio Avahi persistente al final del bootstrap. |
 
-**Chat sin acceso a Internet:** el cliente en `/chat/` usa archivos bajo [`config/converse/vendor/`](proyecto_pimienta/config/converse/vendor/) (Converse 12, libsignal, locale `es`, `emoji.json`, logo). Ese directorio se genera o actualiza **una vez con red** con `./ops/vendor-converse.sh` (variable opcional `CONVERSE_VENDOR_VERSION` para fijar versión npm). Los binarios van versionados en el repo para clonar y operar solo en LAN.
+**Permisos FileBrowser:** corre como UID 1000; si fallan escrituras en `archivos/` o `data/filebrowser/` ejecutá `sudo chown -R 1000:1000 archivos data/filebrowser` (desde `proyecto_pimienta/`).
+
+**Chat sin Internet:** los assets de Converse ya están en el repo (`config/converse/vendor/`). Si necesitás actualizar a otra versión: `./ops/vendor-converse.sh` (requiere red solo esa vez).
 
 ### Operación 100 % LAN (revisión de dependencias)
 
@@ -133,63 +143,30 @@ En cada arranque de FileBrowser se ejecuta un bootstrap que **crea o actualiza**
 
 Para comprobar: apagá Internet, recargá `/`, `/chat/`, `/archivos/` y revisá la pestaña *Red* del navegador; no debería haber solicitudes fallidas a CDNs salvo el caso de fuentes del skin.
 
-### Inicio limpio (todo desde cero)
+### Inicio limpio (wiki vacía)
 
 Wiki vacía + Chat vacío. Útil para arrancar un nodo nuevo sin contenido previo.
 
 ```bash
 cd proyecto_pimienta
-
-# 0. Configurar pimienta.local (solo la primera vez)
-./ops/setup-hosts.sh
-
-# (opcional) contraseñas y puerto del gateway — ver sección anterior
-# cp .env.example .env && nano .env
-
-# 1. Certificados y permisos Prosody (solo la primera vez, o si borrás data/prosody-certs)
+cp .env.example .env && nano .env   # contraseñas + LAN_MDNS=1
 ./ops/init-chat.sh
-
-# 2. Levantar contenedores
 docker compose up -d
+# Acceso LAN persistente (si no usaste bootstrap):
+./ops/setup-lan-mdns.sh --install-service
 ```
 
-La wiki queda detrás del gateway en `http://pimienta.local/` (o `http://pimienta.local:$GATEWAY_HTTP_PORT`), el chat en `/chat/` (entrada anónima con Converse), FileBrowser en `/archivos/` y, si lo necesitás, seguís pudiendo abrir la wiki en **8080** y FileBrowser en **8081** directamente.
-
-### Inicio con contenido (wiki restaurada + chat limpio)
-
-Levanta la wiki con contenido previo (base de datos, configuración, uploads/imágenes) y el chat arranca vacío.
+### Inicio con contenido (wiki restaurada — recomendado)
 
 ```bash
 cd proyecto_pimienta
-
-# 0. Configurar pimienta.local (solo la primera vez)
-./ops/setup-hosts.sh
-
-# 1. Certificados Prosody (primera vez en esta máquina)
-./ops/init-chat.sh
-
-# 2. Levantar contenedores
-docker compose up -d
-
-# 3. Restaurar contenido de la Wiki
-./ops/restore-wiki.sh
-```
-
-Por defecto restaura el dump incluido en el repositorio. Si tenés un backup propio generado con `./ops/backup-wiki.sh`, indicalo así:
-
-```bash
-./ops/restore-wiki.sh --backup ./backups/wiki/exports/wiki-backup-<fecha>.tar.gz
-```
-
-**Atajo (mismo flujo en un comando):** no toca `/etc/hosts`; el paso 0 sigue siendo necesario una vez por máquina.
-
-```bash
-cd proyecto_pimienta
-./ops/setup-hosts.sh   # solo la primera vez
+cp .env.example .env && nano .env   # contraseñas + LAN_MDNS=1
 ./ops/bootstrap-with-restore.sh
-# o con backup propio:
+# Con backup propio:
 # ./ops/bootstrap-with-restore.sh --backup ./backups/wiki/exports/wiki-backup-<fecha>.tar.gz
 ```
+
+`bootstrap-with-restore.sh` hace todo: certificados, `docker compose up`, espera servicios, restaura wiki e instala el servicio Avahi si `LAN_MDNS=1`.
 
 ### Verificación
 
