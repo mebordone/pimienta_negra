@@ -25,7 +25,8 @@ Uso:
   ./ops/setup-lan-mdns.sh --stop           Detener procesos avahi-publish lanzados con --apply.
 
 Variables (.env o entorno):
-  LAN_IP   Forzar IP LAN (por defecto: primera IPv4 global detectada).
+  LAN_IP   IP LAN fija (opcional). Al --install-service se escribe en /etc/default/pimienta-mdns.
+           Si no la definís, el servicio detecta la IPv4 en cada arranque (recomendado con DHCP).
 
 Requisitos:
   avahi-daemon + avahi-utils  →  sudo apt install avahi-daemon avahi-utils
@@ -78,19 +79,38 @@ cmd_status() {
 cmd_install_service() {
   check_avahi
   local ip; ip="$(detect_lan_ip)"
-  echo "Instalando servicio systemd persistente → $ip"
+  echo "Instalando servicio systemd persistente (IP actual: $ip; se redetecta en cada arranque)."
 
-  # Script runner (se copia a /usr/local/lib para ser independiente de la ruta del repo)
-  sudo bash -c "cat > ${RUNNER}" <<RUNNER_EOF
+  # IP fija opcional para systemd (si no existe o está vacío, el runner detecta en cada inicio).
+  if [[ -n "${LAN_IP:-}" ]]; then
+    echo "LAN_IP en .env → /etc/default/pimienta-mdns (IP fija)."
+    sudo bash -c "printf '%s\n' 'LAN_IP=${LAN_IP}' > /etc/default/pimienta-mdns"
+  else
+    sudo bash -c "printf '%s\n' '# Opcional: LAN_IP=192.168.x.x para no depender de DHCP' > /etc/default/pimienta-mdns"
+  fi
+
+  # Runner: NO embebe la IP del día de la instalación (DHCP la cambia y el celular deja de entrar).
+  sudo bash -c "cat > ${RUNNER}" <<'RUNNER_EOF'
 #!/usr/bin/env bash
 # Runner del servicio pimienta-mdns: publica pimienta*.local en la LAN.
-IP="${ip}"
+# LAN_IP puede venir de EnvironmentFile=/etc/default/pimienta-mdns (opcional).
+set -euo pipefail
+detect_ip_at_start() {
+  if [[ -n "${LAN_IP:-}" ]]; then echo "$LAN_IP"; return; fi
+  local a=""
+  command -v ip >/dev/null 2>&1 && a="$(ip -4 -o addr show scope global 2>/dev/null | awk '{print $4}' | cut -d/ -f1 | head -n1 || true)"
+  [[ -z "$a" ]] && a="$(hostname -I 2>/dev/null | awk '{for(i=1;i<=NF;i++) if($i !~ /^127\./) {print $i; exit}}' || true)"
+  if [[ -z "$a" ]]; then echo "pimienta-mdns: no pude detectar IPv4 LAN (definí LAN_IP en /etc/default/pimienta-mdns)" >&2; exit 1; fi
+  echo "$a"
+}
+IP="$(detect_ip_at_start)"
+echo "pimienta-mdns: publicando pimienta*.local → ${IP}"
 NAMES=(pimienta.local accounts.pimienta.local conference.pimienta.local)
 pids=()
-trap 'kill "\${pids[@]}" 2>/dev/null; wait' EXIT INT TERM
-for name in "\${NAMES[@]}"; do
-  avahi-publish -a -R "\$name" "\$IP" &
-  pids+=(\$!)
+trap 'kill "${pids[@]}" 2>/dev/null; wait' EXIT INT TERM
+for name in "${NAMES[@]}"; do
+  avahi-publish -a -R "$name" "$IP" &
+  pids+=($!)
 done
 wait
 RUNNER_EOF
@@ -104,6 +124,7 @@ Wants=network-online.target avahi-daemon.service
 
 [Service]
 Type=simple
+EnvironmentFile=-/etc/default/pimienta-mdns
 ExecStart=/bin/bash ${RUNNER}
 Restart=on-failure
 RestartSec=10
@@ -115,8 +136,9 @@ SVC_EOF
   sudo systemctl daemon-reload
   sudo systemctl enable --now "${SERVICE_NAME}"
   echo ""
-  echo "Servicio ${SERVICE_NAME} activo y configurado para iniciar con el sistema."
+  echo "Servicio ${SERVICE_NAME} activo. La IP se recalcula al iniciar el servicio (DHCP seguro)."
   echo "Desde cualquier equipo en la misma Wi‑Fi: http://pimienta.local/"
+  echo "Si cambió el router o la IP:  sudo systemctl restart ${SERVICE_NAME}"
   echo ""
   echo "Estado:  sudo systemctl status ${SERVICE_NAME}"
   echo "Logs:    sudo journalctl -u ${SERVICE_NAME} -f"
@@ -128,7 +150,7 @@ cmd_uninstall_service() {
     return 0
   fi
   sudo systemctl disable --now "${SERVICE_NAME}" 2>/dev/null || true
-  sudo rm -f "$SERVICE_FILE" "$RUNNER"
+  sudo rm -f "$SERVICE_FILE" "$RUNNER" /etc/default/pimienta-mdns
   sudo systemctl daemon-reload
   echo "Servicio ${SERVICE_NAME} eliminado."
 }
