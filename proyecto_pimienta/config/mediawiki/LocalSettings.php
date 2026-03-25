@@ -64,6 +64,9 @@ $wgLogos = [
 	'icon' => "$wgResourceBasePath/resources/assets/change-your-logo-icon.svg",
 ];
 
+## Favicon vía gateway (nginx sirve /favicon.ico para todo el host).
+$wgFavicon = '/favicon.ico';
+
 ## UPO means: this is also a user preference option
 
 $wgEnableEmail = false;
@@ -161,17 +164,33 @@ wfLoadSkin( 'Vector' );
 
 # --- PERSONALIZACIÓN PIMIENTA ---
 $wgDefaultSkin = "minerva";
+// Un solo logo en cabecera: si además se define wordmark con la misma PNG, Minerva la muestra enorme y solapa el título.
 $wgLogos = [
-    '1x' => "/images/wiki_burbuja_135x135.png",
-    'icon' => "/images/wiki_burbuja_135x135.png",
-    'wordmark' => [
-        'src' => "/images/wiki_burbuja_135x135.png",
-        'width' => 135,
-        'height' => 135,
-    ],
+	'1x' => "/images/wiki_burbuja_135x135.png",
+	'icon' => "/images/wiki_burbuja_135x135.png",
 ];
 $wgEnableUploads = true;
 
 wfLoadSkin( 'MinervaNeue' );
+
+// Logo en el pie (además del encabezado): bloque «copyright» de $wgFooterIcons.
+$wgFooterIcons['copyright']['wikipimienta'] = [
+	'src' => $wgScriptPath . '/images/wiki_burbuja_135x135.png',
+	'url' => $wgScriptPath . '/',
+	'alt' => $wgSitename,
+	'width' => '48',
+	'height' => '48',
+];
+
+// Tope visual del logo en Minerva (cabecera y pie).
+$wgHooks['BeforePageDisplay'][] = static function ( $out, $skin ) {
+	$out->addInlineStyle(
+		'.mw-logo-container img,.mw-header .mw-logo-icon img,.mw-header .mw-logo-wordmark img,'
+		. '#mw-mf-viewport .branding-box img{max-height:3rem;max-width:10rem;width:auto;height:auto;'
+		. 'object-fit:contain;vertical-align:middle}'
+		. '#footer-copyrightico img{max-height:3rem;width:auto;height:auto;max-width:10rem;'
+		. 'object-fit:contain;vertical-align:middle}'
+	);
+};
 # -------------------------------
 $wgShowExceptionDetails = true;
