@@ -37,6 +37,8 @@ Además, **`/chat/`** la sirve el mismo **nginx** desde el volumen `config/conve
 | Ruta | Destino |
 |------|---------|
 | `/` | MediaWiki |
+| `/favicon.ico`, `/favicon.png` | PNG único del nodo (misma identidad en wiki, chat y pestañas que piden `/favicon.ico`). |
+| `/archivos/static/img/icons/` | Mismos archivos que `config/filebrowser/branding/img/icons/` (HEAD/GET; evita limitaciones del upstream FileBrowser). |
 | `/archivos/` | FileBrowser (sin strip del prefijo; `baseURL=/archivos`) |
 | `/chat/`, `/chat` | En **puerto 80:** **301 → HTTPS** (mismo host y ruta). En **443:** Converse.js estático (`config/converse/`). |
 | `/http-bind`, `/xmpp-websocket` | Prosody `:5280` (HTTP plano en red Docker); en 80 y 443 según cómo acceda el cliente. |

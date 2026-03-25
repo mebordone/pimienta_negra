@@ -10,3 +10,5 @@ Material para quienes **despliegan, mantienen o desarrollan** el nodo. El inicio
 | [Guía para quienes desarrollan](contribucion.md) | Estructura del repo, convenciones, scripts `ops/`, backups de wiki. |
 
 El [Roadmap](../Roadmap.md) sigue siendo el lugar de **funcionalidades planificadas** (panel admin, instalador, modo AP, etc.).
+
+El [CHANGELOG](../CHANGELOG.md) en la raíz del repo resume **cambios entregados** por versión o por bloque de trabajo.

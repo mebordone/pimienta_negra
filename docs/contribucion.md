@@ -13,6 +13,9 @@ pimienta_negra/
     ├── .env.example
     ├── archivos/             # Árbol compartido FileBrowser (contenido local)
     ├── config/               # nginx, prosody, mediawiki, converse, filebrowser
+    │   └── mediawiki/
+    │       ├── portada-principal.wikitext  # «Página principal» (maintenance/run.php edit)
+    │       └── MediaWiki-Sidebar.wikitext   # Barra lateral por defecto (sin chat/archivos en sidebar)
     ├── data/                 # Persistencia (ignorada; ver .gitignore en la raíz)
     ├── ops/                  # Scripts operativos (bash/sh)
     └── backups/wiki/         # Dump SQL de referencia (copia_wiki_real.sql)
@@ -28,6 +31,7 @@ pimienta_negra/
 | `verify-stack.sh` | Smoke test HTTP del gateway. |
 | `setup-lan-mdns.sh` | Avahi persistente o modo efímero. |
 | `wiki-edit-via-api.sh` | Editar página vía Action API (requiere contraseña Admin wiki). |
+| `ensure-portada-logo.sh` | Copia el logo a `data/.../1/1f/Logo_Wiki_Pimienta.png` si falta (portada). |
 | `bootstrap-filebrowser-users.sh` | Invocado por el contenedor FileBrowser; usuarios admin + invitado. |
 
 ## Convenciones

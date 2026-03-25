@@ -205,20 +205,23 @@ Los detalles de cada bloque siguen en las secciones numeradas más abajo. Para *
 - **Solución**: en el bloque `server :80` de nginx, `/chat` y `/chat/` redirigen con **301** a `https://$http_host/…` ([`default.conf`](proyecto_pimienta/config/nginx/default.conf)). El bloque **443** sigue sirviendo Converse en `/chat/` y XMPP en `/http-bind` y `/xmpp-websocket`.
 - **Verificación**: `./ops/verify-stack.sh` comprueba el redirect HTTP→HTTPS y un **200** en `https://…/chat/` (con `-k` por certificado autofirmado).
 
-### 5.2. Portada de la wiki: bienvenida clara y botones de acceso
+### 5.2. Portada de la wiki: bienvenida clara y botones de acceso — *entregado*
 
-- **Problema**: la Página Principal arranca con *"MediaWiki se ha instalado."* (texto por defecto) y los enlaces a chat/archivos están al final. Una persona no técnica no sabe qué hacer.
+- **Problema**: la Página Principal arranca con *"MediaWiki se ha instalado."* (texto por defecto) y los enlaces a chat/archivos están al final. Una persona no técnica no sabe qué hacer. Además, el **logo del encabezado** (skin Minerva) se ve **demasiado grande**, se sale de la franja del header y **solapa el título** y el contenido en móvil y en escritorio.
 - **Solución**: rediseñar la portada con enfoque mobile-first:
   - Eliminar el bloque de bienvenida de MediaWiki.
   - Tres **botones o tarjetas grandes**: Wiki · Chat · Archivos, cada uno con icono y descripción de una línea.
   - Credenciales de FileBrowser en una sección aparte ("Ayuda" o "Cómo acceder") para no exponer datos en la primera vista.
-- **Tareas**:
-  - Redactar wikitext de portada con tablas/HTML inline para los botones.
-  - Editar vía `maintenance/run.php edit` o `ops/wiki-edit-via-api.sh`.
-  - Regenerar `copia_wiki_real.sql`.
+  - **Logo en la portada** (cuerpo de la página, no el del menú): imagen `[[Archivo:Logo_Wiki_Pimienta.png|…]]` centrada, importada al wiki con `maintenance/run.php importImages`.
+  - **Logo del encabezado**: sin *wordmark* duplicado y CSS en [`LocalSettings.php`](proyecto_pimienta/config/mediawiki/LocalSettings.php) (`BeforePageDisplay`).
+- **Entrega en el repo**:
+  - Fuente wikitext versionada: [`config/mediawiki/portada-principal.wikitext`](proyecto_pimienta/config/mediawiki/portada-principal.wikitext).
+  - Aplicar en una wiki viva: `docker compose exec -T wiki php maintenance/run.php edit -u Admin -s "…" "Página principal" < config/mediawiki/portada-principal.wikitext` (o [`ops/wiki-edit-via-api.sh`](proyecto_pimienta/ops/wiki-edit-via-api.sh)); **no** editar el dump SQL a mano — regenerar con `mysqldump` o [`ops/backup-wiki.sh`](proyecto_pimienta/ops/backup-wiki.sh).
+  - Dump de referencia: [`backups/wiki/copia_wiki_real.sql`](proyecto_pimienta/backups/wiki/copia_wiki_real.sql) (incluye la imagen importada y la revisión de portada).
 
 ### 5.3. Navegación entre servicios (wiki ↔ chat ↔ archivos)
 
+- **Estado**: enlaces directos en `MediaWiki:Sidebar` a chat/archivos **no** están activos en el dump de referencia; la barra lateral sigue el contenido estándar ([`MediaWiki-Sidebar.wikitext`](proyecto_pimienta/config/mediawiki/MediaWiki-Sidebar.wikitext)). La portada y el portal siguen enlazando a esas herramientas.
 - **Problema**: hoy cada servicio es un mundo separado; no hay forma de ir de uno a otro sin saber la URL.
 - **Solución**:
   - **Wiki**: agregar enlaces en la barra lateral (`MediaWiki:Sidebar`) a `/chat/` y `/archivos/`.
@@ -231,15 +234,14 @@ Los detalles de cada bloque siguen en las secciones numeradas más abajo. Para *
 
 ### 5.4. Favicon e identidad visual
 
-- **Problema**: el chat no tiene favicon propio → errores de mixed content con `favicon.ico` de la wiki. No hay identidad visual consistente entre servicios.
-- **Solución**:
-  - Generar un `favicon.ico` y/o `favicon.png` a partir del logo de la burbuja (`wiki_burbuja_135x135.png`).
-  - Servir el favicon desde nginx para todas las rutas (o por lo menos `/chat/`).
-  - Opcional: meta tags de color (`theme-color`) en el `<head>` del chat para que el celular use los colores del nodo.
-- **Tareas**:
-  - Crear favicon en `config/converse/favicon.ico` (o data-URI en `index.html`).
-  - Agregar `<link rel="icon" …>` en `config/converse/index.html`.
-  - Evaluar un `location = /favicon.ico` global en nginx que sirva el archivo desde la wiki.
+- **Problema**: el chat no tenía favicon propio → riesgo de mixed content y poca coherencia visual entre servicios.
+- **Solución (entregada)**:
+  - PNG 48×48 generado desde `config/mediawiki/images/wiki_burbuja_135x135.png` → [`proyecto_pimienta/config/nginx/favicon.png`](proyecto_pimienta/config/nginx/favicon.png) (regenerar con ImageMagick: `convert … -resize 48x48 -strip`).
+  - Gateway nginx: `location = /favicon.ico` y `location = /favicon.png` en **80 y 443** (mismo archivo; `default_type image/png` para `/favicon.ico`).
+  - Chat: `<link rel="icon" href="/favicon.ico" type="image/png">` en [`config/converse/index.html`](proyecto_pimienta/config/converse/index.html).
+  - Wiki: `$wgFavicon = '/favicon.ico'` en `LocalSettings.php`.
+  - FileBrowser: `branding.files` → `/branding` (volumen [`config/filebrowser/branding`](proyecto_pimienta/config/filebrowser/branding) con `img/icons/*`), porque la UI enlaza a `/archivos/static/img/icons/…`, no a `/favicon.ico`.
+- **Pendiente opcional**: `theme-color` en el `<head>` del chat.
 
 ### 5.5. URLs cortas en la wiki (Short URLs)
 

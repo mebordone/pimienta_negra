@@ -20,7 +20,7 @@ Este fork incorpora:
 - **Gateway nginx** — un solo punto de entrada en el puerto **80** del host (o el que definas con `GATEWAY_HTTP_PORT`): wiki en `/`, chat en `/chat/`, archivos en `/archivos/`, WebSocket XMPP en `/xmpp-websocket`.
 - **Portal de archivos compartidos** — [FileBrowser](https://filebrowser.org/) detrás del gateway en `/archivos/` (y opcionalmente directo en el puerto **8081** para depuración). Usuario `admin` y usuario de acceso limitado (por defecto **`pimienta` / `pimienta`**), configurables por variables de entorno.
 - **Roadmap** — plan de trabajo (red AP/nodo, panel de admin, instalador, documentación amplia, etc.).
-- **Documentación técnica** — carpeta [`docs/`](docs/) (arquitectura, decisiones de diseño, operación/troubleshooting, guía para quienes desarrollan).
+- **Documentación técnica** — carpeta [`docs/`](docs/) (arquitectura, decisiones de diseño, operación/troubleshooting, guía para quienes desarrollan). Resumen de cambios recientes: [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Objetivo del proyecto
 
@@ -50,6 +50,8 @@ proyecto_pimienta/
 ├── config/
 │   ├── mediawiki/
 │   │   ├── LocalSettings.php     # Configuración de MediaWiki
+│   │   ├── portada-principal.wikitext  # Fuente de «Página principal» (aplicar con maintenance/run.php edit)
+│   │   ├── MediaWiki-Sidebar.wikitext  # Barra lateral por defecto (sin enlaces §5.3 a chat/archivos)
 │   │   └── images/               # Logo y assets de branding
 │   ├── filebrowser/
 │   │   └── settings.json         # FileBrowser: baseURL /archivos + proxy nginx sin quitar prefijo

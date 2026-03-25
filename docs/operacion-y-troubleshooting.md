@@ -10,6 +10,12 @@ Desde `proyecto_pimienta/`:
 
 Comprueba HTTP vía gateway (wiki, `/archivos/`); **`/chat/` en HTTP** redirige a **HTTPS** y el script valida el **200** en `https://…/chat/`. No valida WebSocket en profundidad.
 
+## Favicon (wiki, chat, archivos)
+
+El gateway sirve **`/favicon.ico`** y **`/favicon.png`** en **puerto 80 y 443** desde el volumen montado [`config/nginx/favicon.png`](../proyecto_pimienta/config/nginx/favicon.png) (PNG; el navegador lo pide al mismo host que la wiki o `/archivos/`). Tras recrear el contenedor `gateway`, comprobar con `curl -sI http://pimienta.local/favicon.ico` (o tu host/puerto). Para regenerar el icono desde el logo burbuja: `convert config/mediawiki/images/wiki_burbuja_135x135.png -resize 48x48 -strip config/nginx/favicon.png` (desde `proyecto_pimienta/`).
+
+**FileBrowser** no usa `/favicon.ico`: su HTML apunta a **`/archivos/static/img/icons/…`**. El repo incluye branding en [`config/filebrowser/branding/`](../proyecto_pimienta/config/filebrowser/branding) (`branding.files=/branding` vía bootstrap). El **gateway nginx** intercepta `^~ /archivos/static/img/icons/` y sirve esos archivos desde disco: el binario de FileBrowser solo acepta **GET** en `/static/` (muchas peticiones **HEAD** devolvían 404) y su CSP puede interferir con SVG servidos por el upstream. **`favicon.svg` debe llevar el PNG en base64 embebido** (no `href="/favicon.png"`): Chromium y otros ignoran recursos externos dentro de un favicon SVG. Tras cambiar `config/nginx/favicon.png`, regenerá `favicon.svg` (y el resto de iconos si querés) bajo `config/filebrowser/branding/img/icons/` y recreá **gateway** (y **filebrowser** si tocás la DB/branding).
+
 ## Checklist: “¿por qué no entra desde el celular?”
 
 1. **Misma Wi‑Fi** que la máquina del nodo (no datos móviles).  
@@ -42,6 +48,7 @@ Avisos habituales en consola (si el chat **funciona**): mapas de fuente faltante
 
 - Si aparece *“filtrado por USE my_wiki dejó el SQL vacío”* en versiones viejas del script, actualizar `restore-wiki.sh` desde el repo (lógica para dumps sin `USE`).  
 - Restaurar siempre con el dump **`copia_wiki_real.sql`** versionado o con un `.tar.gz` generado por `backup-wiki.sh`.
+- **Logo en la portada invisible / imagen rota** (`Archivo:Logo_Wiki_Pimienta.png`): el SQL trae el registro del archivo, pero el PNG vive en `data/mediawiki/images/1/1f/`. Si restauraste solo la base o vaciaste `data/mediawiki/images/`, ejecutá desde `proyecto_pimienta/`: `./ops/ensure-portada-logo.sh` (copia desde `config/mediawiki/images/wiki_burbuja_135x135.png`). Alternativa: `docker compose exec wiki php maintenance/run.php importImages /ruta/con/un/solo/png` como al importar la primera vez.
 
 ## HTTPS en el celular
 
