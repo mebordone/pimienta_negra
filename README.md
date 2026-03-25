@@ -18,8 +18,9 @@ Este fork incorpora:
 - **Backup y restauración de la Wiki** — scripts (`ops/backup-wiki.sh`, `ops/restore-wiki.sh`) que generan y restauran paquetes `.tar.gz` con la base de datos, `LocalSettings.php` y uploads/imágenes.
 - **Chat XMPP** — Prosody + interfaz web Converse.js; script `ops/init-chat.sh` (certificados y permisos antes del primer `docker compose up`).
 - **Gateway nginx** — un solo punto de entrada en el puerto **80** del host (o el que definas con `GATEWAY_HTTP_PORT`): wiki en `/`, chat en `/chat/`, archivos en `/archivos/`, WebSocket XMPP en `/xmpp-websocket`.
-- **Portal de archivos compartidos** — [FileBrowser](https://filebrowser.org/) detrás del gateway en `/archivos/` (y opcionalmente directo en el puerto **8081** para depuración). Usuarios `admin` e `invitado` con contraseñas por variables de entorno.
+- **Portal de archivos compartidos** — [FileBrowser](https://filebrowser.org/) detrás del gateway en `/archivos/` (y opcionalmente directo en el puerto **8081** para depuración). Usuario `admin` y usuario de acceso limitado (por defecto **`pimienta` / `pimienta`**), configurables por variables de entorno.
 - **Roadmap** — plan de trabajo (red AP/nodo, panel de admin, instalador, documentación amplia, etc.).
+- **Documentación técnica** — carpeta [`docs/`](docs/) (arquitectura, decisiones de diseño, operación/troubleshooting, guía para quienes desarrollan).
 
 ## Objetivo del proyecto
 
@@ -38,6 +39,9 @@ Sensibilizar a la comunidad sobre la importancia de la intranet comunitaria, su 
 ## Estructura del repositorio
 
 ```
+docs/                             # Documentación técnica del proyecto (ver docs/README.md)
+Roadmap.md
+README.md
 proyecto_pimienta/
 ├── docker-compose.yml            # Stack: wiki + prosody + filebrowser + gateway (nginx)
 ├── .env.example                  # Variables (gateway, wiki, FileBrowser, Prosody)
@@ -118,10 +122,12 @@ Copiá [proyecto_pimienta/.env.example](proyecto_pimienta/.env.example) a `proye
 
 | Variable | Default | Descripción |
 |----------|---------|-------------|
-| `GATEWAY_HTTP_PORT` | `80` | Puerto nginx en el host. Si el 80 está ocupado usá otro (ej `8088`) y mismo número en `MW_SERVER`. |
-| `MW_SERVER` | `http://pimienta.local` | URL base de la wiki. Si el gateway no está en el 80, incluí el puerto (ej `http://pimienta.local:8088`). |
+| `GATEWAY_HTTP_PORT` | `80` | Puerto nginx en el host. Si el 80 está ocupado usá otro (ej `8088`) y, si fijás `MW_SERVER`, el mismo puerto ahí. |
+| `GATEWAY_HTTPS_PORT` | `443` | Puerto TLS del gateway: solo responde con **301 a HTTP** (cert. autofirmado de `data/prosody-certs/`). Si el 443 del host está ocupado, cambiá ambos. |
+| `MW_SERVER` | *(vacío)* | Si está vacío, la wiki usa el mismo host que escribís en el navegador (evita redirigir a `pimienta.local` cuando un celular no resuelve `.local`). Para forzar siempre el nombre: `http://pimienta.local` o con puerto `http://pimienta.local:8088`. |
 | `FILEBROWSER_ADMIN_PASSWORD` | valor de prueba | Mínimo 8 caracteres. |
-| `FILEBROWSER_INVITADO_PASSWORD` | valor de prueba | Mínimo 8 caracteres. |
+| `FILEBROWSER_INVITADO_USERNAME` | `pimienta` | Usuario de acceso limitado en FileBrowser. |
+| `FILEBROWSER_INVITADO_PASSWORD` | `pimienta` | Mínimo 8 caracteres (mismo valor por defecto que el usuario). |
 | `PROSODY_ADMIN_PASSWORD` | valor de prueba | Cuenta `admin@accounts.pimienta.local`. |
 | `LAN_MDNS` | `0` | Poné `1` para instalar servicio Avahi persistente al final del bootstrap. |
 
@@ -133,10 +139,10 @@ Copiá [proyecto_pimienta/.env.example](proyecto_pimienta/.env.example) a `proye
 
 | Componente | ¿Pide Internet en uso diario? | Notas |
 |------------|-------------------------------|--------|
-| **Nginx (gateway)** | No | Solo hace proxy a `wiki`, `filebrowser` y `prosody` en la red Docker. La directiva `proxy_pass https://prosody…` apunta al **contenedor** Prosody por TLS interno, no a Internet. |
+| **Nginx (gateway)** | No | Proxy HTTP a `wiki`, `filebrowser` y Prosody (HTTP interno). Opcionalmente escucha **443** y redirige a **HTTP** para clientes que fuerzan `https://` en la LAN. |
 | **Prosody + MariaDB** | No | Tráfico solo entre contenedores / volúmenes. |
 | **FileBrowser** | No | La UI sale de la imagen Docker y de tu `config/`; no hay CDN en este repo. |
-| **Chat (`/chat/`)** | No (con `vendor/` en el repo) | Recursos estáticos desde `pimienta.local/chat/vendor/`. Conexión XMPP vía `ws://`/`http://` al mismo host (gateway → Prosody). El JS de Converse incluye *textos* con URLs públicas (p. ej. ayuda OMEMO); no generan peticiones salientes salvo que uses esas funciones contra servidores remotos. |
+| **Chat (`/chat/`)** | No (con `vendor/` en el repo) | Abrí el chat con **`https://pimienta.local/chat/`** (TLS en el puerto 443 del gateway): los navegadores solo exponen `crypto.subtle` en **HTTPS** o en `localhost`, no en `http://pimienta.local`. XMPP: `wss://` y BOSH por HTTPS hacia Prosody detrás del gateway. |
 | **Wiki (MediaWiki)** | En principio no | `InstantCommons` y `pingback` desactivados; [`LocalSettings.php`](proyecto_pimienta/config/mediawiki/LocalSettings.php) fija además `$wgAllowExternalImages = false`. Logo y subidas son locales. **Excepción posible:** el skin (Minerva/Vector) en algunas versiones puede pedir fuentes u otros assets a CDNs; suele degradar el diseño sin romper la wiki. **Contenido:** las páginas pueden tener *enlaces* a la web; el navegador solo los contacta si el usuario hace clic. |
 | **Scripts en `ops/`** | Solo cuando los corrés vos | `vendor-converse.sh` y backups/restores con `curl` usan red **al ejecutarlos**, no mientras corre el stack. |
 | **Instalación / actualización** | Sí, salvo mirror offline | `docker pull` y regenerar `vendor/` necesitan red (o imágenes `.tar` / repo con `vendor/` ya incluido). |
@@ -173,7 +179,7 @@ cp .env.example .env && nano .env   # contraseñas + LAN_MDNS=1
 | URL (vía gateway) | Servicio |
 |-------------------|----------|
 | `http://pimienta.local/` (o `:PUERTO`) | MediaWiki |
-| `http://pimienta.local/chat` o `.../chat/` | Converse.js (redirige sin barra final) |
+| `https://pimienta.local/chat/` | Converse.js (recomendado; **HTTPS** por Web Crypto). También `http://…/chat/` en desktop si el navegador no exige contexto seguro. |
 | `http://pimienta.local/archivos` o `.../archivos/` | FileBrowser (redirige sin barra final) |
 
 Comprobación automática (usa `pimienta.local` con `curl --resolve` hacia `127.0.0.1`, no exige que `/etc/hosts` esté bien en el momento del test):
@@ -185,7 +191,7 @@ cd proyecto_pimienta
 
 Lee `GATEWAY_HTTP_PORT` y el resto del `.env` si existe. Tras cambiar [config/nginx/default.conf](proyecto_pimienta/config/nginx/default.conf), recargá nginx: `docker compose exec gateway nginx -s reload`.
 
-- **Entrada unificada (gateway):** `http://pimienta.local/` (wiki), `http://pimienta.local/chat/` (Converse), `http://pimienta.local/archivos/` (FileBrowser). Si usás otro puerto: `http://pimienta.local:PUERTO/...`
+- **Entrada unificada (gateway):** `http://pimienta.local/` (wiki), **`https://pimienta.local/chat/`** (Converse; aceptá el certificado autofirmado una vez), `http://pimienta.local/archivos/` (FileBrowser). Si usás otro puerto, repetilo en HTTP/HTTPS según corresponda.
 - **Atajo:** wiki en `http://pimienta.local:8080`, FileBrowser en `http://pimienta.local:8081/archivos/` (el `baseURL` es `/archivos`, no sirve la raíz del puerto 8081 sola)
 - **Chat:** al abrir `/chat/` debería conectarse por WebSocket (en las herramientas de red del navegador, `101` en `/xmpp-websocket`). Cuenta admin XMPP: `admin@accounts.pimienta.local` (contraseña `PROSODY_ADMIN_PASSWORD`).
 
@@ -195,8 +201,8 @@ Ese texto suele ser el **nginx instalado en el sistema operativo** (sitio por de
 
 1. Verificá que los contenedores estén arriba: `cd proyecto_pimienta && docker compose ps`.
 2. Mirá qué escucha el puerto que usás en el navegador (80 u otro): `ss -tlnp | grep ':80 '` (o el puerto de `GATEWAY_HTTP_PORT`).
-3. **Opción A:** liberá el 80 (por ejemplo `sudo systemctl stop nginx` y, si no lo usás, `sudo systemctl disable nginx` en el host), poné en `.env` `GATEWAY_HTTP_PORT=80` y `MW_SERVER=http://pimienta.local`, ejecutá `docker compose up -d --force-recreate gateway wiki` o `./ops/up-gateway-port80.sh`.
-4. **Opción B:** dejá el nginx del host en el 80 y publicá el gateway en otro puerto; copiá [`.env.example`](proyecto_pimienta/.env.example) a `.env` con `GATEWAY_HTTP_PORT=8088` y `MW_SERVER=http://pimienta.local:8088`, ejecutá `docker compose up -d` y entrá siempre con `http://pimienta.local:8088/`.
+3. **Opción A:** liberá el 80 (por ejemplo `sudo systemctl stop nginx` y, si no lo usás, `sudo systemctl disable nginx` en el host), poné en `.env` `GATEWAY_HTTP_PORT=80` (podés dejar `MW_SERVER` vacío o fijar `http://pimienta.local`), ejecutá `docker compose up -d --force-recreate gateway wiki` o `./ops/up-gateway-port80.sh`.
+4. **Opción B:** dejá el nginx del host en el 80 y publicá el gateway en otro puerto; copiá [`.env.example`](proyecto_pimienta/.env.example) a `.env` con `GATEWAY_HTTP_PORT=8088` y `MW_SERVER=http://pimienta.local:8088` (o vacío y entrás siempre con el mismo host:puerto en la barra), ejecutá `docker compose up -d`.
 
 Después corré `./ops/verify-stack.sh` para confirmar que la wiki responde por el gateway y no la página genérica de nginx.
 
@@ -221,5 +227,5 @@ Genera un `.tar.gz` en `backups/wiki/exports/` que incluye la base de datos, `Lo
 ### Notas
 
 - El restore incluye preprocesado del SQL (filtra por base `my_wiki` y ajusta collations) para compatibilizar con MariaDB 10.5.
-- Si restaurás con `--backup` y el `.tar.gz` trae `LocalSettings.php`, ese archivo reemplaza el del repo. El `LocalSettings.php` del repo usa `getenv('MW_SERVER')` para alinear la URL canónica con el puerto del gateway; si el backup fija `$wgServer` a otra URL, corregilo o ajustá `.env` y recreá el servicio `wiki` (`docker compose up -d --force-recreate wiki`).
+- Si restaurás con `--backup` y el `.tar.gz` trae `LocalSettings.php`, ese archivo reemplaza el del repo. El `LocalSettings.php` del repo usa `MW_SERVER` si está definido, o el host de la petición; si el backup fija `$wgServer` a otra URL, corregilo o ajustá `.env` y recreá el servicio `wiki` (`docker compose up -d --force-recreate wiki`).
 - Para resetear datos del servidor XMPP, borrá `./data/prosody` y `./data/prosody-certs`, volvé a ejecutar `./ops/init-chat.sh` y `docker compose up -d`.
