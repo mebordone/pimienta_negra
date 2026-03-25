@@ -13,9 +13,9 @@
 #   ./ops/bootstrap-with-restore.sh [opciones de restore-wiki.sh]
 #
 # Variables clave (.env):
-#   MW_SERVER             URL canónica de la wiki   (default: http://pimienta.local)
+#   MW_SERVER             Opcional. Vacío = wiki usa el host de la petición (IP o .local).
 #   GATEWAY_HTTP_PORT     Puerto del nginx en host   (default: 80)
-#   FILEBROWSER_ADMIN_PASSWORD / FILEBROWSER_INVITADO_PASSWORD
+#   FILEBROWSER_ADMIN_PASSWORD / FILEBROWSER_INVITADO_USERNAME / FILEBROWSER_INVITADO_PASSWORD
 #   PROSODY_ADMIN_PASSWORD
 #   LAN_MDNS=1            Instalar servicio Avahi para acceso desde otros equipos LAN
 # ─────────────────────────────────────────────────────────────────────────────
@@ -100,8 +100,13 @@ fi
 echo ""
 echo "═══════════════════════════════════════════════════════"
 echo " Listo. Verificá con:  ./ops/verify-stack.sh"
-MW="${MW_SERVER:-http://pimienta.local}"
+if [[ -n "${MW_SERVER:-}" ]]; then
+  MW="$MW_SERVER"
+else
+  MW="http://pimienta.local (o http://<IP-LAN> — wiki sin redirigir si MW_SERVER vacío)"
+fi
+CHAT_HINT="https://pimienta.local/chat/ (o https://<IP-LAN>/chat/ — mismo host que la wiki)"
 echo " Wiki:     ${MW}/"
-echo " Chat:     ${MW}/chat/"
-echo " Archivos: ${MW}/archivos/"
+echo " Chat:     ${CHAT_HINT}   (HTTPS — requerido en muchos navegadores/celulares)"
+echo " Archivos: entrá con el mismo host que la wiki + /archivos/"
 echo "═══════════════════════════════════════════════════════"

@@ -5,6 +5,7 @@ CONFIG="/config/settings.json"
 DB="/database/filebrowser.db"
 
 ADMIN_PASS="${FILEBROWSER_ADMIN_PASSWORD:?FILEBROWSER_ADMIN_PASSWORD is required}"
+GUEST_USER="${FILEBROWSER_INVITADO_USERNAME:-pimienta}"
 INV_PASS="${FILEBROWSER_INVITADO_PASSWORD:?FILEBROWSER_INVITADO_PASSWORD is required}"
 
 if [ "${#ADMIN_PASS}" -lt 8 ] || [ "${#INV_PASS}" -lt 8 ]; then
@@ -64,9 +65,9 @@ else
     --perm.download
 fi
 
-echo "FileBrowser: asegurando usuario invitado..."
-if user_exists invitado; then
-  fb users update invitado \
+echo "FileBrowser: asegurando usuario de acceso limitado (${GUEST_USER})..."
+if user_exists "$GUEST_USER"; then
+  fb users update "$GUEST_USER" \
     -c "$CONFIG" \
     -d "$DB" \
     -p "$INV_PASS" \
@@ -79,7 +80,7 @@ if user_exists invitado; then
     --perm.share=false \
     --perm.download
 else
-  fb users add invitado "$INV_PASS" \
+  fb users add "$GUEST_USER" "$INV_PASS" \
     -c "$CONFIG" \
     -d "$DB" \
     --perm.admin=false \
@@ -92,4 +93,4 @@ else
     --perm.download
 fi
 
-echo "FileBrowser: usuarios listos (admin + invitado)."
+echo "FileBrowser: usuarios listos (admin + ${GUEST_USER})."
