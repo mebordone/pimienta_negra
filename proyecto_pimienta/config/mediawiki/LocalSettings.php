@@ -31,8 +31,25 @@ $wgMetaNamespace = "Wiki_Pimienta";
 ## https://www.mediawiki.org/wiki/Manual:Short_URL
 $wgScriptPath = "";
 
-## The protocol and server name to use in fully-qualified URLs
-$wgServer = getenv( 'MW_SERVER' ) ?: 'http://pimienta.local';
+## URL canónica de la wiki (enlaces y redirecciones).
+## - Si MW_SERVER está definido y no vacío en el contenedor → se usa tal cual (ej. http://pimienta.local).
+## - Si MW_SERVER está vacío → se usa el mismo host (y esquema) que pidió el navegador (IP o nombre),
+##   para que entrar por http://192.168.x.x no redirija a pimienta.local (útil si .local no resuelve).
+## - En CLI (mantenimiento) sin HTTP_HOST → http://pimienta.local
+$mwServerEnv = getenv( 'MW_SERVER' );
+if ( is_string( $mwServerEnv ) && $mwServerEnv !== '' ) {
+	$wgServer = $mwServerEnv;
+} elseif ( PHP_SAPI !== 'cli' && !empty( $_SERVER['HTTP_HOST'] ) ) {
+	$proto = 'http';
+	if ( !empty( $_SERVER['HTTP_X_FORWARDED_PROTO'] ) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https' ) {
+		$proto = 'https';
+	} elseif ( !empty( $_SERVER['HTTPS'] ) && $_SERVER['HTTPS'] !== 'off' ) {
+		$proto = 'https';
+	}
+	$wgServer = $proto . '://' . $_SERVER['HTTP_HOST'];
+} else {
+	$wgServer = 'http://pimienta.local';
+}
 
 ## El path debe estar vacío si usas el puerto 8080 directamente
 $wgScriptPath = "";
@@ -157,7 +174,4 @@ $wgEnableUploads = true;
 
 wfLoadSkin( 'MinervaNeue' );
 # -------------------------------
-# LAN / sin Internet: refuerzo explícito (InstantCommons y pingback ya están en false arriba).
-$wgAllowExternalImages = false;
-
 $wgShowExceptionDetails = true;

@@ -7,39 +7,24 @@
   <link rel="stylesheet" href="vendor/converse.min.css" />
   <style>
     html, body { height: 100%; margin: 0; }
-    #converse-root { height: 100%; }
-    .pimienta-chat-note {
-      font-family: system-ui, sans-serif;
-      font-size: 0.85rem;
-      padding: 0.5rem 1rem;
-      background: #f5f5f5;
-      border-bottom: 1px solid #ddd;
-    }
-    .pimienta-chat-note a { color: #0645ad; }
   </style>
 </head>
 <body class="converse-fullscreen">
-  <p class="pimienta-chat-note">
-    Entrás como invitadx sin contraseña. Cuenta opcional (usuario fijo) en el dominio
-    <strong>accounts.pimienta.local</strong> — registración abierta en la red local desde un cliente XMPP.
-    Moderación: <strong>admin@accounts.pimienta.local</strong> (ver README).
-  </p>
-  <div id="converse-root"></div>
   <script src="vendor/converse.min.js"></script>
   <script>
     (function () {
       var host = window.location.host;
-      var wsUrl = 'ws://' + host + '/xmpp-websocket';
+      var wsProto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      var wsUrl = wsProto + '//' + host + '/xmpp-websocket';
       var boshUrl = window.location.protocol + '//' + host + '/http-bind';
       converse.initialize({
-        root: window.location.pathname.replace(/\/?$/, '/') || '/chat/',
         assets_path: '/chat/vendor/',
         view_mode: 'fullscreen',
         language: 'es',
         discover_connection_methods: false,
         websocket_url: wsUrl,
         bosh_service_url: boshUrl,
-        domain: 'pimienta.local',
+        jid: 'pimienta.local',
         muc_domain: 'conference.pimienta.local',
         locked_muc_domain: 'conference.pimienta.local',
         auto_join_rooms: [
