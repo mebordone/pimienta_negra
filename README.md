@@ -2,6 +2,33 @@
 
 Fork de [Proyecto Aguaribay (Pimienta Rosa)](https://github.com/mebordone/pimienta_negra) que extiende el nodo comunitario autohospedado con herramientas de operación, backup y un portal de archivos.
 
+## En 30 segundos
+
+Pimienta Negra es un nodo comunitario para eventos, barrios o espacios educativos que funciona en red local. La idea es que cualquier persona en la LAN pueda abrir `pimienta.local` y usar tres cosas desde un mismo punto:
+
+- **Wiki** para documentar y dejar comentarios.
+- **Chat** para anuncios y coordinación en tiempo real.
+- **Archivos** para compartir material.
+
+## Que puede hacer una persona al conectarse
+
+- Entrar a la portada de la wiki y ver accesos directos a las herramientas.
+- Participar en canales de chat del evento (anuncios, coordinacion, etc.).
+- Subir y bajar archivos compartidos desde el portal.
+- Usar todo desde celular o notebook en la misma Wi-Fi, sin depender de Internet para el uso diario.
+
+## Que se implemento en este fork
+
+- **Backup y restore de wiki** (base de datos + contenido) para recuperar rapido el nodo.
+- **Bootstrap de inicio** para que alguien descargue el repo, ejecute un script y deje todo funcionando casi de una.
+- **Migracion de chat liviana**: se reemplazo Synapse/Mattermost + Postgres por Prosody + Converse.
+- **Acceso unificado** por rutas en `pimienta.local` (`/`, `/chat`, `/archivos`) en vez de depender de puertos.
+- **FileBrowser** con usuarios configurables para compartir archivos en la red local.
+- **mDNS persistente** para resolver `pimienta.local` desde otras compus/celulares en la LAN.
+- **Portada y UX de wiki** ajustadas para que sea la entrada principal del sistema.
+- **Identidad visual unificada** (favicon) entre wiki, chat y archivos.
+- **Documentacion tecnica** ampliada (arquitectura, operacion, troubleshooting, roadmap y changelog).
+
 ## Qué es Aguaribay (proyecto original)
 
 Aguaribay es un nodo comunitario pensado para una Raspberry Pi con dos ejes: **wiki comunitaria** y **chat en la red local**. En este fork (Pimienta Negra) el chat se implementa con **Prosody + Converse.js** (XMPP liviano, invitadx sin contraseña).

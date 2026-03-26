@@ -1,23 +1,72 @@
 # Registro de cambios
 
-Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/). Versiones sin número siguen el trabajo en `main`.
+Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/). Las entradas siguen el historial de **Git** (`git log --date=short`), agrupadas por día. Orden **cronológico inverso** (lo más reciente arriba).
 
-## [Sin publicar]
+---
 
-### Añadido
+### 2026-03-25
 
-- **Favicon unificado** (wiki, chat y FileBrowser) bajo el mismo host: `config/nginx/favicon.png` (48×48 desde la burbuja), rutas `/favicon.ico` y `/favicon.png` en nginx (puertos 80 y 443), `<link rel="icon">` en `config/converse/index.html`, `$wgFavicon` en MediaWiki.
-- **FileBrowser**: carpeta `config/filebrowser/branding/img/icons/` (ICO, PNG, SVG con PNG en base64 para Chromium), volumen `/branding`, `branding.files=/branding` en el bootstrap del contenedor.
-- **Gateway**: interceptación `^~ /archivos/static/img/icons/` para servir esos iconos desde disco (corrige HEAD→404 del binario FileBrowser y evita CSP del upstream en el SVG).
-- **Wiki**: fuentes versionadas `config/mediawiki/portada-principal.wikitext` y `config/mediawiki/MediaWiki-Sidebar.wikitext` (referencia; la barra lateral del dump sigue sin enlaces §5.3 a chat/archivos).
-- **Ops**: `ops/ensure-portada-logo.sh` copia el logo a `data/mediawiki/images/1/1f/Logo_Wiki_Pimienta.png` si falta; invocado al final de `restore-wiki.sh`.
+- docs: CHANGELOG, Roadmap §5.2–5.4, favicon y portada
+- feat(ops): ensure-portada-logo tras restore de la wiki
+- chore(wiki): actualizar copia_wiki_real.sql de referencia
+- feat(wiki): fuentes wikitext de portada y MediaWiki-Sidebar
+- feat(wiki): favicon, logos Minerva sin wordmark y pie con burbuja
+- feat(stack): favicon unificado vía nginx, branding FileBrowser y chat
+- feat(gateway): redirigir HTTP /chat a HTTPS; chore: .gitignore en raíz
+- chore(wiki): actualizar dump copia_wiki_real con contenido de referencia
+- docs(roadmap): checklist nodo LAN, prioridades y sección de mejoras UX
+- docs(readme): MW_SERVER opcional, troubleshooting y enlaces a docs/
+- docs: arquitectura, decisiones de diseño, operación y guía de contribución
+- chore(gitignore): ignorar venv, archivos de FileBrowser y mantener .gitkeep
+- feat(stack): HTTPS en gateway para chat, MW_SERVER opcional y Converse con wss dinámico
+- feat(ops): bootstrap con URLs según MW_SERVER y usuario invitado FileBrowser configurable
+- feat(ops): script para editar páginas de la wiki vía Action API
+- fix(ops): servicio mDNS con IP detectada en cada arranque y /etc/default opcional
+- fix(ops): restore wiki compatible con dumps sin USE y variables @OLD_*
 
-### Cambiado
+### 2026-03-24
 
-- **MediaWiki `LocalSettings.php`**: logos Minerva sin `wordmark` duplicado; icono en pie (`$wgFooterIcons`); CSS inline (`BeforePageDisplay`) para limitar tamaño del logo en cabecera y pie.
-- **Dump de referencia** `backups/wiki/copia_wiki_real.sql`: alineado con portada, logo importado y revisiones actuales.
+- fix(chat+archivos): use local Converse vendor assets and fix FileBrowser baseURL
+- fix(restore): strip SET var=@OLD_* lines to avoid NULL error in MariaDB 10.5
+- feat(lan): persistent Avahi systemd service for pimienta*.local
+- feat(lan): mDNS Avahi to publish pimienta*.local to the LAN
+- docs: refresh README for gateway, XMPP chat and FileBrowser
+- fix(wiki): MW_SERVER from env, disable email and external images
+- feat(stack): nginx gateway, Prosody, Converse.js and FileBrowser
+- refactor!: remove Synapse/Matrix configuration and init script
+- chore: remove tracked Python venv from repository
+- chore: ignore venv, .env and FileBrowser uploads; add .env.example
+- wiki: Roadmap §3.2 — contenido alineado al gateway y dump SQL
+- README: documentar fork Pimienta Negra vs Aguaribay y modos de inicio.
+- Roadmap: adoptar FileBrowser para el portal de archivos.
 
-### Documentación
+### 2026-03-19
 
-- `Roadmap.md`: §5.2 portada entregada, §5.3 estado de la sidebar, §5.4 favicon entregado.
-- `README.md`, `docs/contribucion.md`, `docs/operacion-y-troubleshooting.md` (favicon, FileBrowser, logo portada), `docs/arquitectura.md` (rutas de favicon e iconos).
+- Mover backups históricos de nodo a carpeta dedicada.
+- Documentar flujo de backup/restauración para usuarios nuevos.
+- Agregar scripts operativos para modo C y persistencia de uploads.
+- Reorganizar assets de Wiki en backups y config.
+
+### 2026-03-10
+
+- Update README.md
+
+### 2026-03-03
+
+- Wiki configurada y Git optimizado para ignorar datos sensibles
+
+### 2026-02-16
+
+- Fix: IP fija 192.168.0.170 y compatibilidad Mongo 4.4 para Raspberry Pi
+
+### 2026-01-16
+
+- Mis avances de hoy en la Wiki
+
+### 2026-01-04
+
+- Resguardo de base de datos y estructura de carpetas finalizada
+
+### 2025-12-08
+
+- Primer commit: estructura inicial del proyecto
