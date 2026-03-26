@@ -314,12 +314,18 @@ Los detalles de cada bloque siguen en las secciones numeradas más abajo. Para *
 
 - **Descripción**: la Raspberry Pi crea su propia red WiFi y sirve los servicios del nodo de forma autónoma.
 - **Objetivo**: que el nodo funcione en cualquier lugar (plaza, aula, taller) con solo enchufar la Pi.
+- **Alcance (decisión de UX)**: es un **modo de contingencia**, no el flujo por defecto. Se usa cuando no hay router/AP disponible o cuando la red existente bloquea mDNS.
 - **Comportamiento esperado**:
   - La Pi levanta un SSID propio (por ejemplo `PimientaRosa`).
   - La Pi actúa como servidor DHCP para los dispositivos que se conecten.
-  - `http://pimienta.local` resuelve siempre hacia el nodo.
+  - La experiencia para usuarias evita pedir IP: `http://pimienta.local` debe resolver siempre hacia el nodo (DNS local del AP y/o mDNS según compatibilidad).
+  - Definir alias de respaldo no-mDNS (por ejemplo `pimienta.lan`) para equipos donde `.local` tenga conflictos.
+  - Idealmente, al conectarse a la red, la persona ve de inmediato cómo entrar (portal cautivo o página de bienvenida con QR/URL).
 - **Tareas**:
   - Script de instalación que configure modo AP (hostapd / NetworkManager + DHCP).
+  - Script operativo de uso diario (ej. `start-ap-mode.sh` / `stop-ap-mode.sh`) para activar/desactivar contingencia sin tocar configuraciones manuales.
+  - Configurar DNS local del AP para responder `pimienta.local` (y aliases) al IP del nodo.
+  - Definir fallback UX si no abre portal cautivo: mostrar SSID, URL y QR en salida de script y documentación.
   - Documentar cómo cambiar el nombre de la red si se desea.
 
 ### 7.2. Modo Nodo de Red
@@ -329,7 +335,8 @@ Los detalles de cada bloque siguen en las secciones numeradas más abajo. Para *
 - **Comportamiento esperado**:
   - La Pi obtiene IP por DHCP o se configura con IP fija.
   - Se intenta exponer `pimienta.local` mediante mDNS (Avahi).
-  - Como fallback, se puede acceder por la IP, indicada en la documentación (pegatina en la Pi, etc.).
+  - Como fallback técnico puede accederse por IP, pero la experiencia recomendada para personas usuarias sigue siendo por nombre (evitar memorizar números).
+  - Si la red bloquea mDNS y no hay DNS del router configurable, se recomienda cambiar temporalmente a **Modo AP de contingencia**.
 - **Tareas**:
   - Definir un mecanismo para elegir el modo (preguntas en el instalador o archivo de configuración).
   - Script que configure hostname, Avahi y, opcionalmente, IP fija.
