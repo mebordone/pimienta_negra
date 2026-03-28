@@ -27,6 +27,7 @@ services:
       - MW_DB_PASS=wikipassword
     volumes:
       - ./config/mediawiki/LocalSettings.php:/var/www/html/LocalSettings.php
+      - ./config/mediawiki/apache-wiki-path.conf:/etc/apache2/conf-enabled/wiki-path.conf:ro
       - ./data/mediawiki/images:/var/www/html/images
     depends_on:
       - db
@@ -77,6 +78,7 @@ services:
       - ./config/nginx/favicon.png:/usr/share/nginx/html/favicon.png:ro
       - ./config/filebrowser/branding/img/icons:/usr/share/nginx/filebrowser-icons:ro
       - ./config/converse:/usr/share/nginx/html/chat:ro
+      - ./config/landing:/usr/share/nginx/html/landing:ro
       - ./data/prosody-certs:/etc/nginx/certs:ro
     depends_on:
       - wiki

@@ -29,7 +29,8 @@ $wgMetaNamespace = "Wiki_Pimienta";
 ## For more information on customizing the URLs
 ## (like /w/index.php/Page_title to /wiki/Page_title) please see:
 ## https://www.mediawiki.org/wiki/Manual:Short_URL
-$wgScriptPath = "";
+## Path público bajo el gateway: /wiki/ → proxy al contenedor en /.
+$wgScriptPath = "/wiki";
 
 ## URL canónica de la wiki (enlaces y redirecciones).
 ## - Si MW_SERVER está definido y no vacío en el contenedor → se usa tal cual (ej. http://pimienta.local).
@@ -50,9 +51,6 @@ if ( is_string( $mwServerEnv ) && $mwServerEnv !== '' ) {
 } else {
 	$wgServer = 'http://pimienta.local';
 }
-
-## El path debe estar vacío si usas el puerto 8080 directamente
-$wgScriptPath = "";
 
 ## The URL path to static resources (images, scripts, etc.)
 $wgResourceBasePath = $wgScriptPath;
@@ -166,8 +164,8 @@ wfLoadSkin( 'Vector' );
 $wgDefaultSkin = "minerva";
 // Un solo logo en cabecera: si además se define wordmark con la misma PNG, Minerva la muestra enorme y solapa el título.
 $wgLogos = [
-	'1x' => "/images/wiki_burbuja_135x135.png",
-	'icon' => "/images/wiki_burbuja_135x135.png",
+	'1x' => $wgScriptPath . '/images/wiki_burbuja_135x135.png',
+	'icon' => $wgScriptPath . '/images/wiki_burbuja_135x135.png',
 ];
 $wgEnableUploads = true;
 
