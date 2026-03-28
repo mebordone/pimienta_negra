@@ -97,7 +97,7 @@ echo "7) ¿El celular está en la MISMA subred? (primeros 3 números de la IP qu
 if [[ -n "$LAN_IP" ]] && [[ "$LAN_IP" =~ ^[0-9]+\.[0-9]+\.[0-9]+\. ]]; then
   prefix="${LAN_IP%.*}"
   echo "   El nodo es ${LAN_IP} → el celular debería ser algo como ${prefix}.XXX"
-  echo "   En Android: Ajustes → Wi‑Fi → GALATEAWIFI5G → Detalles / IP (debe ser ${prefix}.*)"
+  echo "   En Android: Ajustes → Wi‑Fi → tu red → Detalles / IP (debe ser ${prefix}.*)"
 fi
 echo ""
 echo "8) Firewall (ejecutá con sudo en el nodo):"
