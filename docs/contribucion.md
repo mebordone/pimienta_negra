@@ -34,6 +34,7 @@ pimienta_negra/
 | `verify-stack.sh` | Smoke test HTTP del gateway. |
 | `tests/run-all.sh` | Orquestador: `docker compose config`, shellcheck opcional (`tests/`), integración HTTP (incluye `verify-stack`). |
 | `setup-lan-mdns.sh` | Avahi persistente o modo efímero. |
+| `diagnose-lan-access.sh` | Si no entra desde celular/otra PC: IP, puerto Docker, HTTP, ufw, mDNS. |
 | `wiki-edit-via-api.sh` | Editar página vía Action API (requiere contraseña Admin wiki). |
 | `ensure-portada-logo.sh` | Copia el logo a `data/.../1/1f/Logo_Wiki_Pimienta.png` si falta (portada). |
 | `bootstrap-filebrowser-users.sh` | Invocado por el contenedor FileBrowser; usuarios admin + invitado. |

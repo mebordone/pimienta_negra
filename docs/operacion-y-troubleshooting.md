@@ -18,12 +18,28 @@ El gateway sirve **`/favicon.ico`** y **`/favicon.png`** en **puerto 80 y 443** 
 
 **FileBrowser** no usa `/favicon.ico`: su HTML apunta a **`/archivos/static/img/icons/…`**. El repo incluye branding en [`config/filebrowser/branding/`](../proyecto_pimienta/config/filebrowser/branding) (`branding.files=/branding` vía bootstrap). El **gateway nginx** intercepta `^~ /archivos/static/img/icons/` y sirve esos archivos desde disco: el binario de FileBrowser solo acepta **GET** en `/static/` (muchas peticiones **HEAD** devolvían 404) y su CSP puede interferir con SVG servidos por el upstream. **`favicon.svg` debe llevar el PNG en base64 embebido** (no `href="/favicon.png"`): Chromium y otros ignoran recursos externos dentro de un favicon SVG. Tras cambiar `config/nginx/favicon.png`, regenerá `favicon.svg` (y el resto de iconos si querés) bajo `config/filebrowser/branding/img/icons/` y recreá **gateway** (y **filebrowser** si tocás la DB/branding).
 
+## No entra desde el celular u otra PC (misma Wi‑Fi)
+
+1. **En el nodo**, desde `proyecto_pimienta/`: **`./ops/diagnose-lan-access.sh`** — muestra IP LAN, si Docker escucha el puerto, HTTP local, firewall y pistas para el celular.
+2. **Proba primero por IP**, no por nombre: en el celular abrí **`http://192.168.x.x/`** (la IP que imprime el diagnóstico; si usás otro puerto, **`http://IP:8088/`** según `GATEWAY_HTTP_PORT`).
+   - Si **por IP entra** y **`pimienta.local` no** → mDNS o “DNS privado” en Android.
+   - Si **por IP no entra** → casi seguro **firewall en el PC del nodo** (`sudo ufw allow 80/tcp` y `443/tcp` si aplica) o el router con **aislamiento de clientes / AP isolation** (impide que dos Wi‑Fi vean el puerto 80 entre sí). Revisá el panel del router (GALATEA u otro).
+3. **Las tres en la misma SSID no alcanza** si el AP separa clientes: algunos routers tienen “Wi‑Fi para invitados” o VLAN distinta; todas deben estar en la **misma red L2** sin aislamiento.
+4. **Mismo router, dos bandas (2,4 GHz y 5 GHz):** a veces solo una banda tiene **aislamiento de clientes** activo o reglas distintas. Si `pimienta.local` o la IP del nodo **no responden en la red 5G** pero **sí en la 2,4 GHz** (`GALATEAWIFI` vs `GALATEAWIFI5G` u otros nombres), unificá PC y celulares en la banda que funcione o desactivá el aislamiento en el panel del router para la SSID de 5 GHz.
+
+## mDNS (`pimienta.local` desde otras máquinas)
+
+- **`LAN_MDNS=1`** en `.env` y volver a correr **`./ops/bootstrap-with-restore.sh`** (o solo `./ops/setup-lan-mdns.sh --install-service`) instala el servicio **`pimienta-mdns`**. Sin eso, `pimienta.local` suele resolver solo en la PC del nodo.
+- El runner del servicio **re-detecta la IPv4 cada 60s** (versiones recientes del script): si el router cambió la IP por DHCP, en hasta ~1 minuto se vuelve a publicar la nueva. Tras **actualizar** el repo, conviene **`sudo systemctl restart pimienta-mdns`** o re-ejecutar **`--install-service`** para escribir el runner nuevo en `/usr/local/lib/`.
+- **`avahi-daemon`** debe estar activo: `systemctl is-active avahi-daemon`. Paquetes: `avahi-daemon` y `avahi-utils`.
+- Diagnóstico: `./ops/setup-lan-mdns.sh` (sin argumentos) muestra IP detectada y si el servicio está activo.
+
 ## Checklist: “¿por qué no entra desde el celular?”
 
 1. **Misma Wi‑Fi** que la máquina del nodo (no datos móviles).  
 2. **Resolución de nombre:** `pimienta.local` requiere mDNS en muchos móviles.  
    - En la PC: `systemctl status pimienta-mdns`, `journalctl -u pimienta-mdns -n 30`.  
-   - Si la IP del nodo cambió por DHCP: `sudo systemctl restart pimienta-mdns` o reinstalar servicio con `./ops/setup-lan-mdns.sh --install-service`.  
+   - Si la IP del nodo cambió por DHCP: `sudo systemctl restart pimienta-mdns` o `./ops/setup-lan-mdns.sh --install-service` (reinstala runner y reinicia el servicio).  
 3. **Probar por IP:** `http://192.168.x.x/` (mismo puerto que el gateway). Si por IP funciona y por nombre no → **mDNS**.  
    - Si **al abrir por IP** la barra cambia a `pimienta.local` y aparece **NXDOMAIN**: la wiki redirigía al host fijo de `MW_SERVER`. Dejá **`MW_SERVER` vacío** en `.env` (o borrá la línea), `docker compose up -d --force-recreate wiki`, y volvé a probar por IP.  
 4. **DNS privado (Android):** con “DNS privado” activo, `pimienta.local` a veces no resuelve por mDNS. Probar **Desactivado** o seguir usando **IP** con `MW_SERVER` vacío.  

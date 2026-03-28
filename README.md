@@ -104,6 +104,7 @@ proyecto_pimienta/
 │   ├── vendor-converse.sh        # Descarga Converse 12 + libsignal a config/converse/vendor/ (requiere red)
 │   ├── setup-hosts.sh            # Agrega pimienta.local a /etc/hosts (una sola vez)
 │   ├── setup-lan-mdns.sh         # mDNS (Avahi) para que la LAN resuelva pimienta*.local
+│   ├── diagnose-lan-access.sh    # Si no entra desde celular/otra PC: IP, puerto, firewall
 │   ├── bootstrap-filebrowser-users.sh
 │   └── filebrowser-entrypoint.sh
 ├── tests/

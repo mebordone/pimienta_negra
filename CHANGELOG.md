@@ -6,6 +6,9 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/). L
 
 ### 2026-03-28
 
+- feat(ops): `diagnose-lan-access.sh` para cuando no entra por LAN (IP, Docker, ufw, mDNS)
+- fix(ops): mDNS — runner `pimienta-mdns` re-detecta IP cada 60s; `install-service` hace `restart` para aplicar el runner actualizado
+- docs: operación (sección mDNS) y `.env.example` alineado a `--install-service`
 - feat(landing): página en `/` con `config.json`, logo en `/assets/logo.png`, footer (nodo, Aguaribay, principios)
 - feat(stack): wiki pública en `/wiki/`, nginx con URI completa hacia el contenedor y `Alias /wiki` en Apache (ResourceLoader / `load.php`)
 - feat(tests): `tests/run-all.sh`, `wait-for-gateway.sh` sobre `/wiki/`, integración `config.json` y smoke ampliado
