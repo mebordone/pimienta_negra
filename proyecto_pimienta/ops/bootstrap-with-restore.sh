@@ -6,8 +6,8 @@
 #   3. Levanta el stack (docker compose up -d)
 #   4. Espera base de datos y wiki
 #   5. Restaura el contenido de la wiki
-#   6. (Si LAN_MDNS=1 en .env) Instala servicio systemd para que pimienta*.local
-#      sea accesible desde cualquier equipo de la misma Wi-Fi, incluidos celulares.
+#   6. (Si LAN_MDNS=1 en .env) Instala/reinicia servicio systemd pimienta-mdns para que
+#      pimienta*.local resuelva en la Wi‑Fi (mDNS); el runner re-detecta la IP periódicamente.
 #
 # Uso:
 #   ./ops/bootstrap-with-restore.sh [opciones de restore-wiki.sh]

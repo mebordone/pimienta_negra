@@ -79,7 +79,7 @@ cmd_status() {
 cmd_install_service() {
   check_avahi
   local ip; ip="$(detect_lan_ip)"
-  echo "Instalando servicio systemd persistente (IP actual: $ip; se redetecta en cada arranque)."
+  echo "Instalando servicio systemd persistente (IP actual: $ip; el runner re-detecta la IP cada 60s)."
 
   # IP fija opcional para systemd (si no existe o está vacío, el runner detecta en cada inicio).
   if [[ -n "${LAN_IP:-}" ]]; then
@@ -94,6 +94,8 @@ cmd_install_service() {
 #!/usr/bin/env bash
 # Runner del servicio pimienta-mdns: publica pimienta*.local en la LAN.
 # LAN_IP puede venir de EnvironmentFile=/etc/default/pimienta-mdns (opcional).
+# Re-detecta la IPv4 cada 60s: si DHCP cambió la IP del nodo, se vuelve a publicar
+# (sin esto, los celulares seguían resolviendo pimienta.local a una IP vieja).
 set -euo pipefail
 detect_ip_at_start() {
   if [[ -n "${LAN_IP:-}" ]]; then echo "$LAN_IP"; return; fi
@@ -103,16 +105,35 @@ detect_ip_at_start() {
   if [[ -z "$a" ]]; then echo "pimienta-mdns: no pude detectar IPv4 LAN (definí LAN_IP en /etc/default/pimienta-mdns)" >&2; exit 1; fi
   echo "$a"
 }
-IP="$(detect_ip_at_start)"
-echo "pimienta-mdns: publicando pimienta*.local → ${IP}"
 NAMES=(pimienta.local accounts.pimienta.local conference.pimienta.local)
 pids=()
-trap 'kill "${pids[@]}" 2>/dev/null; wait' EXIT INT TERM
-for name in "${NAMES[@]}"; do
-  avahi-publish -a -R "$name" "$IP" &
-  pids+=($!)
+stop_publishers() {
+  [[ ${#pids[@]} -eq 0 ]] && return 0
+  kill "${pids[@]}" 2>/dev/null || true
+  wait "${pids[@]}" 2>/dev/null || true
+  pids=()
+}
+on_signal() {
+  stop_publishers
+  exit 0
+}
+trap on_signal INT TERM
+trap stop_publishers EXIT
+
+last_ip=""
+while true; do
+  IP="$(detect_ip_at_start)"
+  if [[ "$IP" != "$last_ip" ]]; then
+    stop_publishers
+    echo "pimienta-mdns: publicando pimienta*.local → ${IP}"
+    for name in "${NAMES[@]}"; do
+      avahi-publish -a -R "$name" "$IP" &
+      pids+=($!)
+    done
+    last_ip="$IP"
+  fi
+  sleep 60
 done
-wait
 RUNNER_EOF
   sudo chmod +x "$RUNNER"
 
@@ -134,11 +155,12 @@ WantedBy=multi-user.target
 SVC_EOF
 
   sudo systemctl daemon-reload
-  sudo systemctl enable --now "${SERVICE_NAME}"
+  sudo systemctl enable "${SERVICE_NAME}"
+  sudo systemctl restart "${SERVICE_NAME}"
   echo ""
-  echo "Servicio ${SERVICE_NAME} activo. La IP se recalcula al iniciar el servicio (DHCP seguro)."
+  echo "Servicio ${SERVICE_NAME} activo. La IP se re-detecta cada 60s (DHCP / cambio de red)."
   echo "Desde cualquier equipo en la misma Wi‑Fi: http://pimienta.local/"
-  echo "Si cambió el router o la IP:  sudo systemctl restart ${SERVICE_NAME}"
+  echo "Forzar republish ya:  sudo systemctl restart ${SERVICE_NAME}"
   echo ""
   echo "Estado:  sudo systemctl status ${SERVICE_NAME}"
   echo "Logs:    sudo journalctl -u ${SERVICE_NAME} -f"
