@@ -17,8 +17,16 @@
     <h2 class="visually-hidden">Accesos</h2>
     <ul class="cards">
       <li><a class="card" href="/wiki/">Wiki</a></li>
-      <li><a class="card" href="/chat/">Chat</a></li>
-      <li><a class="card" href="/archivos/">Archivos</a></li>
+      <li>
+        <button type="button" class="card card--as-button" id="landing-chat-open"
+          aria-haspopup="dialog" aria-controls="chat-warn-dialog">
+          Chat
+        </button>
+      </li>
+      <li class="card-cell-archivos">
+        <a class="card" href="/archivos/">Archivos</a>
+        <p class="card-guest-credentials" id="landing-guest-credentials" aria-live="polite">Usuario: pimienta · Contraseña: pimienta</p>
+      </li>
     </ul>
   </main>
 
@@ -49,12 +57,33 @@
     </section>
   </footer>
 
+  <dialog class="chat-warn-dialog" id="chat-warn-dialog" aria-labelledby="chat-warn-title">
+    <div class="chat-warn-dialog__inner">
+      <h2 id="chat-warn-title" class="chat-warn-dialog__title">Antes de entrar al chat</h2>
+      <p class="chat-warn-dialog__body">
+        El chat usa una conexión segura local. La primera vez, tu navegador te va a mostrar una
+        advertencia de que el sitio &quot;no es seguro&quot; — esto es normal en redes locales como esta.
+        Para continuar: tocá Avanzado y luego Continuar al sitio (o similar según tu navegador).
+      </p>
+      <div class="chat-warn-dialog__actions">
+        <button type="button" class="chat-warn-dialog__btn chat-warn-dialog__btn--secondary" id="chat-warn-cancel">Cancelar</button>
+        <button type="button" class="chat-warn-dialog__btn chat-warn-dialog__btn--primary" id="chat-warn-confirm">Entrar al chat →</button>
+      </div>
+    </div>
+  </dialog>
+
   <script>
     (function () {
       var titleEl = document.getElementById('landing-title');
       var descEl = document.getElementById('landing-desc');
       var logoEl = document.getElementById('landing-logo');
+      var credEl = document.getElementById('landing-guest-credentials');
+      var chatOpenBtn = document.getElementById('landing-chat-open');
+      var chatDialog = document.getElementById('chat-warn-dialog');
+      var chatCancelBtn = document.getElementById('chat-warn-cancel');
+      var chatConfirmBtn = document.getElementById('chat-warn-confirm');
       var defaultLogoSrc = '/assets/logo.png';
+      var chatUrl = 'https://' + window.location.hostname + '/chat/';
 
       function resolveLogoUrl(value) {
         if (!value || typeof value !== 'string') return '';
@@ -86,6 +115,31 @@
             logoEl.removeAttribute('hidden');
           }
         }
+        if (credEl) {
+          var guestUser = (typeof data.guest_username === 'string' && data.guest_username.trim())
+            ? data.guest_username.trim()
+            : 'pimienta';
+          var guestPass = (typeof data.guest_password === 'string' && data.guest_password.trim())
+            ? data.guest_password.trim()
+            : 'pimienta';
+          credEl.textContent = 'Usuario: ' + guestUser + ' · Contraseña: ' + guestPass;
+        }
+      }
+
+      if (chatOpenBtn && chatDialog && chatCancelBtn && chatConfirmBtn) {
+        chatOpenBtn.addEventListener('click', function () {
+          chatDialog.showModal();
+          chatCancelBtn.focus();
+        });
+        chatCancelBtn.addEventListener('click', function () {
+          chatDialog.close();
+        });
+        chatConfirmBtn.addEventListener('click', function () {
+          window.location.href = chatUrl;
+        });
+        chatDialog.addEventListener('close', function () {
+          chatOpenBtn.focus();
+        });
       }
 
       fetch('/config.json', { credentials: 'same-origin' })

@@ -10,6 +10,12 @@ Copia local del ícono de Wiki Pimienta (mismo archivo que `config/mediawiki/ima
 
 En `config.json`, `node_logo` puede ser una ruta bajo `/assets/…`, una URL absoluta `http(s)://…`, o cadena vacía `""` para ocultar el logo en el hero tras cargar el JSON.
 
+## Credenciales de invitado (Archivos)
+
+Opcionales: `guest_username` y `guest_password` (strings). Se muestran bajo el botón **Archivos** en la landing. Si no están definidas o vienen vacías, se usa **`pimienta`** para ambas (alineado al usuario invitado por defecto de FileBrowser en `docker-compose`).
+
+El botón **Chat** abre un diálogo y luego envía a `https://<hostname>/chat/` (puerto HTTPS por defecto del navegador, normalmente 443). Si mapeás HTTPS del gateway a otro puerto en el host, esa URL puede no coincidir: en ese caso los usuarios deben abrir el chat con la URL correcta manualmente.
+
 ## Compatibilidad de URLs (wiki en `/wiki/`)
 
 Los enlaces antiguos que apuntaban a la wiki en la raíz (por ejemplo `/index.php?title=...`) **no** redirigen automáticamente en esta fase. La wiki vive bajo **`/wiki/`**; conviene actualizar marcadores y enlaces.
