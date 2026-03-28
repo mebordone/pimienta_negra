@@ -4,6 +4,15 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/). L
 
 ---
 
+### 2026-03-28
+
+- feat(landing): página en `/` con `config.json`, logo en `/assets/logo.png`, footer (nodo, Aguaribay, principios)
+- feat(stack): wiki pública en `/wiki/`, nginx con URI completa hacia el contenedor y `Alias /wiki` en Apache (ResourceLoader / `load.php`)
+- feat(tests): `tests/run-all.sh`, `wait-for-gateway.sh` sobre `/wiki/`, integración `config.json` y smoke ampliado
+- ci: workflow GitHub Actions para tests estáticos y e2e del stack
+- docs: README, Roadmap §3, arquitectura, decisiones, operación y contribución alineados a landing y rutas
+- docs(ops): mensaje final de `bootstrap-with-restore.sh` con landing (`/`) y wiki (`/wiki/`)
+
 ### 2026-03-25
 
 - docs: CHANGELOG, Roadmap §5.2–5.4, favicon y portada

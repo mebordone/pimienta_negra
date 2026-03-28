@@ -27,6 +27,7 @@ Pimienta Negra es un nodo comunitario para eventos, barrios o espacios educativo
 - **mDNS persistente** para resolver `pimienta.local` desde otras compus/celulares en la LAN.
 - **Landing en `/`** (HTML estático + `config.json`) y **wiki en `/wiki/`** vía nginx y `$wgScriptPath`.
 - **Identidad visual unificada** (favicon) entre wiki, chat y archivos.
+- **Suite de tests** (`tests/run-all.sh`, `verify-stack.sh`) y **CI** en GitHub Actions para validar compose y HTTP del gateway.
 - **Documentacion tecnica** ampliada (arquitectura, operacion, troubleshooting, roadmap y changelog).
 
 ## Qué es Aguaribay (proyecto original)
@@ -76,7 +77,8 @@ proyecto_pimienta/
 ├── archivos/                     # Carpeta compartida del portal (bind → FileBrowser /srv)
 ├── config/
 │   ├── mediawiki/
-│   │   ├── LocalSettings.php     # Configuración de MediaWiki
+│   │   ├── LocalSettings.php     # MediaWiki; $wgScriptPath /wiki para el gateway
+│   │   ├── apache-wiki-path.conf # Alias Apache /wiki → DocumentRoot (load.php e index bajo /wiki/)
 │   │   ├── portada-principal.wikitext  # Fuente de «Página principal» (aplicar con maintenance/run.php edit)
 │   │   ├── MediaWiki-Sidebar.wikitext  # Barra lateral por defecto (sin enlaces §5.3 a chat/archivos)
 │   │   └── images/               # Logo y assets de branding
@@ -87,7 +89,7 @@ proyecto_pimienta/
 │   │   └── conf.d/               # Includes opcionales
 │   ├── nginx/
 │   │   └── default.conf          # Reverse proxy
-│   ├── landing/                  # Página en / (index.html, config.json, styles.css)
+│   ├── landing/                  # Página en / (index.html, config.json, styles.css, assets/logo.png)
 │   └── converse/
 │       ├── index.html            # Cliente Converse.js (ruta /chat/); assets en vendor/
 │       └── vendor/               # converse.min.js/css, libsignal, locales es, emoji (sin CDN)
@@ -219,6 +221,7 @@ cp .env.example .env && nano .env   # contraseñas + LAN_MDNS=1
 | `http://pimienta.local/wiki/` | MediaWiki (`/wiki` redirige a `/wiki/`) |
 | `https://pimienta.local/chat/` | Converse.js (**HTTPS** por Web Crypto). `http://…/chat/` redirige con **301** a HTTPS en el gateway. |
 | `http://pimienta.local/archivos` o `.../archivos/` | FileBrowser (redirige sin barra final) |
+| `http://pimienta.local/config.json` | Config opcional de la landing (`node_name`, `node_description`, `node_logo`) |
 
 Comprobación automática (usa `pimienta.local` con `curl --resolve` hacia `127.0.0.1`, no exige que `/etc/hosts` esté bien en el momento del test):
 
@@ -233,7 +236,7 @@ Tras cambios en nginx, Compose o scripts, conviene correr la suite completa:
 ./tests/run-all.sh
 ```
 
-Solo validación sin stack arriba: `./tests/run-all.sh --static-only`. Detalle en [`proyecto_pimienta/tests/README.md`](proyecto_pimienta/tests/README.md).
+Solo validación sin stack arriba: `./tests/run-all.sh --static-only`. Detalle en [`proyecto_pimienta/tests/README.md`](proyecto_pimienta/tests/README.md). En GitHub, el workflow [`.github/workflows/stack-tests.yml`](.github/workflows/stack-tests.yml) ejecuta tests estáticos en cada push/PR y e2e en `main`.
 
 Lee `GATEWAY_HTTP_PORT` y el resto del `.env` si existe. Tras cambiar [config/nginx/default.conf](proyecto_pimienta/config/nginx/default.conf), recargá nginx: `docker compose exec gateway nginx -s reload`.
 

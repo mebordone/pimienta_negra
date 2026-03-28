@@ -46,6 +46,14 @@ Avisos habituales en consola (si el chat **funciona**): mapas de fuente faltante
 - Tras cambiar `.env`: `docker compose up -d --force-recreate filebrowser`.  
 - Si la UI queda en “loading”: coherencia entre `baseURL`, nginx (sin strip incorrecto) y bootstrap que fija `baseURL` en la DB.
 
+## Wiki: sin estilos (HTML “pelado”) o logo roto en CSS
+
+Si la wiki carga como lista de enlaces sin diseño Minerva/Vector:
+
+- **Causa habitual:** peticiones a **`/wiki/load.php`** no llegan al script real: Apache del contenedor `wiki` reescribe rutas inexistentes a `index.php` (`short-url.conf`). Sin el **`Alias /wiki /var/www/html`** ([`apache-wiki-path.conf`](../proyecto_pimienta/config/mediawiki/apache-wiki-path.conf) montado en compose), `load.php` devuelve HTML de página en lugar de **CSS** (`Content-Type: text/css`).
+- **Qué hacer:** comprobar que `docker-compose.yml` monta `config/mediawiki/apache-wiki-path.conf` en el servicio `wiki` y recrear el contenedor: `docker compose up -d --force-recreate wiki`.
+- **Comprobación rápida:** `curl -sI 'http://127.0.0.1:8080/wiki/load.php?modules=site.styles&only=styles&skin=minerva'` debe incluir `Content-Type: text/css`.
+
 ## Wiki: restore y dumps
 
 - Si aparece *“filtrado por USE my_wiki dejó el SQL vacío”* en versiones viejas del script, actualizar `restore-wiki.sh` desde el repo (lógica para dumps sin `USE`).  

@@ -31,7 +31,7 @@ Con el stack **ya operativo**, el esfuerzo incremental más valioso suele ser:
 
 | Orden | Bloque | Por qué |
 |-------|--------|--------|
-| 1 | **§5 Mejoras de UX** (redirección chat HTTPS, portada, navegación, favicon, URLs cortas, MUC persistente) | Bajo esfuerzo, alto impacto: reduce frustración inmediata. |
+| 1 | **§5 Mejoras de UX** (URLs cortas wiki, redirecciones desde enlaces viejos en raíz, MUC persistente, pulido Converse) | Chat HTTPS, favicon, landing en `/` y wiki en `/wiki/` ya entregados; sigue valor en short URLs y UX residual. |
 | 2 | **§10 Documentación para personas no técnicas** + pegatinas/QR en el nodo | Reduce soporte y errores de URL/puerto. |
 | 3 | **§4.3 Backups automáticos** (cron + retención) | Protege la wiki sin depender de que alguien acuerde ejecutar el script. |
 | 4 | **§6 Panel de administración web** (mínimo: estado de contenedores, espacio en disco, “backup ahora”) | Menos terminal para cuidadoras del nodo. |
@@ -125,7 +125,7 @@ Los detalles de cada bloque siguen en las secciones numeradas más abajo. Para *
 
 ## 3. Wiki, landing y reverse proxy
 
-> **Decisión de diseño**: la **entrada HTTP en `/`** es una **landing estática** (`config/landing/`, `config.json` opcional) con enlaces claros a wiki, chat y archivos. **MediaWiki** se publica bajo **`/wiki/`** (`$wgScriptPath = "/wiki"` y `proxy_pass` con prefijo quitado en nginx). Un contenedor **nginx** (`gateway`) en el puerto publicado (por defecto **80**, configurable con `GATEWAY_HTTP_PORT`) actúa como reverse proxy.
+> **Decisión de diseño**: la **entrada HTTP en `/`** es una **landing estática** (`config/landing/`, `config.json` opcional) con enlaces claros a wiki, chat y archivos. **MediaWiki** se publica bajo **`/wiki/`** (`$wgScriptPath = "/wiki"`). El **gateway** reenvía al contenedor wiki la **URI completa** (`/wiki/...`); dentro del contenedor, **Apache** usa `Alias /wiki /var/www/html` para que `load.php`, `index.php` y recursos coincidan con esa ruta (evita bucles 301 y la wiki “sin CSS”). Un contenedor **nginx** (`gateway`) en el puerto publicado (por defecto **80**, configurable con `GATEWAY_HTTP_PORT`) actúa como reverse proxy.
 
 ### 3.1. Wiki Pimienta (MediaWiki)
 
@@ -138,7 +138,7 @@ Los detalles de cada bloque siguen en las secciones numeradas más abajo. Para *
 
 - **Objetivo**: al abrir `http://pimienta.local/` se ve la landing; la wiki está en **`/wiki/`**; archivos en `/archivos/`; chat en **`https://pimienta.local/chat/`** (recomendado) o HTTP en entornos que no exijan contexto seguro.
 - **Reverse proxy**: [proyecto_pimienta/config/nginx/default.conf](proyecto_pimienta/config/nginx/default.conf)
-  - **Puerto 80:** `/` → landing estática; `/wiki/` → MediaWiki (prefijo quitado hacia el contenedor); `/chat/` → Converse; `/archivos/` → FileBrowser (ruta completa `/archivos/` sin strip incorrecto; `baseURL=/archivos`); `/xmpp-websocket` y `/http-bind` → Prosody **:5280** (HTTP interno).
+  - **Puerto 80:** `/` → landing estática (`/config.json`, `/landing.css`, `/assets/`); `/wiki/` → MediaWiki (**misma ruta** hacia el contenedor); `/chat/` → Converse; `/archivos/` → FileBrowser (ruta completa `/archivos/` sin strip incorrecto; `baseURL=/archivos`); `/xmpp-websocket` y `/http-bind` → Prosody **:5280** (HTTP interno).
   - **Puerto 443 (TLS):** mismas rutas de **chat y XMPP** que en 80; el resto (incl. `/`) redirige a HTTP para no forzar certificado en landing/wiki/archivos.
 - **Atajos de desarrollo**: la wiki sigue expuesta en **8080** y FileBrowser en **8081** en el host (opcional).
 - **Wiki (dump `copia_wiki_real.sql`):** portada con enlaces a chat (HTTPS) y archivos; páginas Maestranza/Bitácora/Portal alineadas a MariaDB, `docker compose`, scripts de backup/restore y sin secretos en claro. Mantener coherencia al cambiar URLs o stack.

@@ -12,8 +12,10 @@ pimienta_negra/
     ├── docker-compose.yml
     ├── .env.example
     ├── archivos/             # Árbol compartido FileBrowser (contenido local)
-    ├── config/               # nginx, prosody, mediawiki, converse, filebrowser
+    ├── config/               # nginx, prosody, mediawiki, landing, converse, filebrowser
+    │   ├── landing/          # HTML/CSS/JSON y assets de la portada en /
     │   └── mediawiki/
+    │       ├── apache-wiki-path.conf       # Alias /wiki (coherente con $wgScriptPath)
     │       ├── portada-principal.wikitext  # «Página principal» (maintenance/run.php edit)
     │       └── MediaWiki-Sidebar.wikitext   # Barra lateral por defecto (sin chat/archivos en sidebar)
     ├── data/                 # Persistencia (ignorada; ver .gitignore en la raíz)
@@ -51,14 +53,15 @@ pimienta_negra/
 ## Nginx
 
 - Un solo archivo principal: `config/nginx/default.conf`.  
-- Cualquier cambio de rutas debe alinearse con FileBrowser (`baseURL`) y con Converse (`assets_path`, WebSocket).
+- Cualquier cambio de rutas debe alinearse con FileBrowser (`baseURL`), Converse (`assets_path`, WebSocket), la landing (`config/landing/`) y el prefijo wiki **`/wiki/`** en `LocalSettings.php` + `apache-wiki-path.conf`.
 
 ## Pruebas manuales mínimas tras un cambio de infra
 
-1. `http://pimienta.local/` (wiki).  
-2. `https://pimienta.local/chat/` (chat usable).  
-3. `http://pimienta.local/archivos/` (login FileBrowser).  
-4. Opcional: `./tests/run-all.sh` o `./ops/verify-stack.sh`.
+1. `http://pimienta.local/` (landing).  
+2. `http://pimienta.local/wiki/` (wiki con estilos y navegación).  
+3. `https://pimienta.local/chat/` (chat usable).  
+4. `http://pimienta.local/archivos/` (login FileBrowser).  
+5. Opcional: `./tests/run-all.sh` o `./ops/verify-stack.sh` (CI en `.github/workflows/stack-tests.yml` en `main`).
 
 ## Dónde pedir ayuda
 

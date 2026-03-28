@@ -8,13 +8,15 @@ Pimienta Negra es un **stack Docker Compose** pensado para una LAN (típicamente
 flowchart LR
   subgraph docker["Docker Compose"]
     GW["nginx gateway\n:80 / :443"]
+    L[landing estática]
     W[MediaWiki]
     FB[FileBrowser]
     P[Prosody]
     DB[(MariaDB)]
   end
   Celu[Navegadores LAN] --> GW
-  GW -->|"/"| W
+  GW -->|"/"| L
+  GW -->|"/wiki/"| W
   GW -->|"/archivos/"| FB
   GW -->|"/xmpp-websocket\n/http-bind"| P
   W --> DB
@@ -27,7 +29,7 @@ Además, **`/chat/`** la sirve el mismo **nginx** desde el volumen `config/conve
 | Servicio | Imagen / rol | Puerto host (típico) | Notas |
 |----------|--------------|----------------------|--------|
 | **gateway** | `nginx:alpine` | `80`, `443` | Reverse proxy; TLS en 443 solo para rutas de chat y XMPP (ver decisiones). |
-| **wiki** | `mediawiki` | `8080→80` (atajo) | `LocalSettings.php` montado; imágenes en `data/mediawiki/images/`. |
+| **wiki** | `mediawiki` | `8080→80` (atajo) | `LocalSettings.php` + `apache-wiki-path.conf` (Alias `/wiki`); imágenes en `data/mediawiki/images/`. |
 | **db** | `mariadb:10.5` | (interno) | Base `my_wiki`; credenciales en compose + `LocalSettings.php`. |
 | **filebrowser** | `filebrowser/filebrowser` | `8081→80` (atajo) | Raíz de archivos `./archivos`; DB SQLite en `data/filebrowser/`. |
 | **prosody** | `prosodyim/prosody:13.0` | (interno) | XMPP; HTTP WebSocket/BOSH en **5280** hacia nginx. |
@@ -36,7 +38,9 @@ Además, **`/chat/`** la sirve el mismo **nginx** desde el volumen `config/conve
 
 | Ruta | Destino |
 |------|---------|
-| `/` | MediaWiki |
+| `/` | Landing estática (`config/landing/`, vía volumen en el gateway). |
+| `/config.json`, `/landing.css`, `/assets/…` | Archivos de la landing (sin pasar por MediaWiki). |
+| `/wiki/…` | MediaWiki en el contenedor `wiki` (**URI completa** reenviada; Apache resuelve `/wiki` → DocumentRoot). |
 | `/favicon.ico`, `/favicon.png` | PNG único del nodo (misma identidad en wiki, chat y pestañas que piden `/favicon.ico`). |
 | `/archivos/static/img/icons/` | Mismos archivos que `config/filebrowser/branding/img/icons/` (HEAD/GET; evita limitaciones del upstream FileBrowser). |
 | `/archivos/` | FileBrowser (sin strip del prefijo; `baseURL=/archivos`) |

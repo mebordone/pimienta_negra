@@ -6,7 +6,8 @@ Resumen de elecciones que condicionan el código y el despliegue. Detalle histó
 
 | Decisión | Motivo breve |
 |----------|----------------|
-| **MediaWiki** como wiki y “portada” del nodo | Una sola URL de entrada; contenido editable por la comunidad sin desarrollar una landing propia. |
+| **Landing estática en `/` + MediaWiki en `/wiki/`** | Entrada clara (HTML + `config.json`); la wiki sigue siendo el contenido colaborativo; `$wgScriptPath = "/wiki"` alineado al gateway. |
+| **`Alias /wiki` en Apache** (contenedor wiki) | Los PHP viven en la raíz de DocumentRoot; sin alias, `/wiki/load.php` cae en `index.php` y rompe ResourceLoader (CSS/JS). |
 | **Synapse + PostgreSQL → Prosody** (chat) | Menor RAM, sin DB dedicada pesada; login **anónimo** posible; chat **sin MAM** (efímero en servidor), alineado a privacidad. |
 | **Converse.js** en el navegador | Cliente web estándar XMPP; assets servidos **desde el repo** (`vendor/`) para uso 100 % LAN sin CDN. |
 | **FileBrowser** para archivos | Evita desarrollar portal propio; permisos por usuario; UI usable en móvil. |
