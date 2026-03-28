@@ -1,0 +1,54 @@
+name: Stack tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  static:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Docker Compose config
+        working-directory: proyecto_pimienta
+        run: docker compose config >/dev/null
+
+      - name: Install shellcheck
+        run: sudo apt-get update -qq && sudo apt-get install -y shellcheck
+
+      - name: Shellcheck (tests/)
+        working-directory: proyecto_pimienta
+        run: ./tests/static/shellcheck.sh
+
+  e2e:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: static
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare .env and certificates
+        working-directory: proyecto_pimienta
+        run: |
+          cp .env.example .env
+          {
+            echo "GATEWAY_HTTP_PORT=8080"
+            echo "GATEWAY_HTTPS_PORT=8443"
+          } >> .env
+          ./ops/init-chat.sh
+
+      - name: Docker Compose up
+        working-directory: proyecto_pimienta
+        run: docker compose up -d
+
+      - name: Wait for gateway / wiki
+        working-directory: proyecto_pimienta
+        env:
+          PIMIENTA_WAIT_MAX_SEC: "240"
+        run: ./tests/wait-for-gateway.sh
+
+      - name: Integration tests
+        working-directory: proyecto_pimienta
+        run: ./tests/run-all.sh --integration-only
