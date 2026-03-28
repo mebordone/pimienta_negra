@@ -4,15 +4,15 @@ Fork de [Proyecto Aguaribay (Pimienta Rosa)](https://github.com/mebordone/pimien
 
 ## En 30 segundos
 
-Pimienta Negra es un nodo comunitario para eventos, barrios o espacios educativos que funciona en red local. La idea es que cualquier persona en la LAN pueda abrir `pimienta.local` y usar tres cosas desde un mismo punto:
+Pimienta Negra es un nodo comunitario para eventos, barrios o espacios educativos que funciona en red local. La idea es que cualquier persona en la LAN pueda abrir `pimienta.local` y, desde la **landing** en `/`, acceder a tres servicios:
 
-- **Wiki** para documentar y dejar comentarios.
-- **Chat** para anuncios y coordinación en tiempo real.
-- **Archivos** para compartir material.
+- **Wiki** (`/wiki/`) para documentar, escribir notas y dejar comentarios.
+- **Chat** (`/chat/`) para anuncios y coordinación en tiempo real.
+- **Archivos** (`/archivos/`) para compartir material.
 
 ## Que puede hacer una persona al conectarse
 
-- Entrar a la portada de la wiki y ver accesos directos a las herramientas.
+- Ver la portada del nodo en `/` y enlazar a la wiki, el chat y los archivos.
 - Participar en canales de chat del evento (anuncios, coordinacion, etc.).
 - Subir y bajar archivos compartidos desde el portal.
 - Usar todo desde celular o notebook en la misma Wi-Fi, sin depender de Internet para el uso diario.
@@ -22,10 +22,10 @@ Pimienta Negra es un nodo comunitario para eventos, barrios o espacios educativo
 - **Backup y restore de wiki** (base de datos + contenido) para recuperar rapido el nodo.
 - **Bootstrap de inicio** para que alguien descargue el repo, ejecute un script y deje todo funcionando casi de una.
 - **Migracion de chat liviana**: se reemplazo Synapse/Mattermost + Postgres por Prosody + Converse.
-- **Acceso unificado** por rutas en `pimienta.local` (`/`, `/chat`, `/archivos`) en vez de depender de puertos.
+- **Acceso unificado** por rutas en `pimienta.local` (`/`, `/wiki/`, `/chat/`, `/archivos/`) en vez de depender de puertos.
 - **FileBrowser** con usuarios configurables para compartir archivos en la red local.
 - **mDNS persistente** para resolver `pimienta.local` desde otras compus/celulares en la LAN.
-- **Portada y UX de wiki** ajustadas para que sea la entrada principal del sistema.
+- **Landing en `/`** (HTML estático + `config.json`) y **wiki en `/wiki/`** vía nginx y `$wgScriptPath`.
 - **Identidad visual unificada** (favicon) entre wiki, chat y archivos.
 - **Documentacion tecnica** ampliada (arquitectura, operacion, troubleshooting, roadmap y changelog).
 
@@ -44,7 +44,7 @@ Este fork incorpora:
 
 - **Backup y restauración de la Wiki** — scripts (`ops/backup-wiki.sh`, `ops/restore-wiki.sh`) que generan y restauran paquetes `.tar.gz` con la base de datos, `LocalSettings.php` y uploads/imágenes.
 - **Chat XMPP** — Prosody + interfaz web Converse.js; script `ops/init-chat.sh` (certificados y permisos antes del primer `docker compose up`).
-- **Gateway nginx** — un solo punto de entrada en el puerto **80** del host (o el que definas con `GATEWAY_HTTP_PORT`): wiki en `/`, chat en `/chat/`, archivos en `/archivos/`, WebSocket XMPP en `/xmpp-websocket`.
+- **Gateway nginx** — un solo punto de entrada en el puerto **80** del host (o el que definas con `GATEWAY_HTTP_PORT`): landing en `/`, wiki en `/wiki/`, chat en `/chat/`, archivos en `/archivos/`, WebSocket XMPP en `/xmpp-websocket`.
 - **Portal de archivos compartidos** — [FileBrowser](https://filebrowser.org/) detrás del gateway en `/archivos/` (y opcionalmente directo en el puerto **8081** para depuración). Usuario `admin` y usuario de acceso limitado (por defecto **`pimienta` / `pimienta`**), configurables por variables de entorno.
 - **Roadmap** — plan de trabajo (red AP/nodo, panel de admin, instalador, documentación amplia, etc.).
 - **Documentación técnica** — carpeta [`docs/`](docs/) (arquitectura, decisiones de diseño, operación/troubleshooting, guía para quienes desarrollan). Resumen de cambios recientes: [`CHANGELOG.md`](CHANGELOG.md).
@@ -87,6 +87,7 @@ proyecto_pimienta/
 │   │   └── conf.d/               # Includes opcionales
 │   ├── nginx/
 │   │   └── default.conf          # Reverse proxy
+│   ├── landing/                  # Página en / (index.html, config.json, styles.css)
 │   └── converse/
 │       ├── index.html            # Cliente Converse.js (ruta /chat/); assets en vendor/
 │       └── vendor/               # converse.min.js/css, libsignal, locales es, emoji (sin CDN)
@@ -96,13 +97,19 @@ proyecto_pimienta/
 │   ├── backup-wiki.sh            # Genera backup .tar.gz de la wiki
 │   ├── restore-wiki.sh           # Restaura wiki desde .tar.gz o .sql
 │   ├── bootstrap-with-restore.sh # init-chat + compose up + restore-wiki (primer arranque con contenido)
-│   ├── verify-stack.sh           # Comprueba wiki /chat /archivos vía gateway (curl + --resolve)
+│   ├── verify-stack.sh           # Comprueba landing, /wiki/, /chat, /archivos vía gateway (curl + --resolve)
 │   ├── up-gateway-port80.sh      # Tras liberar :80 en el host, levanta gateway y ejecuta verify-stack
 │   ├── vendor-converse.sh        # Descarga Converse 12 + libsignal a config/converse/vendor/ (requiere red)
 │   ├── setup-hosts.sh            # Agrega pimienta.local a /etc/hosts (una sola vez)
 │   ├── setup-lan-mdns.sh         # mDNS (Avahi) para que la LAN resuelva pimienta*.local
 │   ├── bootstrap-filebrowser-users.sh
 │   └── filebrowser-entrypoint.sh
+├── tests/
+│   ├── README.md                 # Suite estática + integración HTTP
+│   ├── run-all.sh                # Orquestador (--static-only / --integration-only)
+│   ├── wait-for-gateway.sh       # Reintentos hasta 200 en /wiki/ (útil en CI)
+│   ├── static/                   # compose config, shellcheck
+│   └── integration/              # verify-stack, favicon, iconos FileBrowser, config landing
 ├── backups/
 │   └── wiki/                     # Dump SQL incluido para restauración inicial
 └── data/                         # Runtime (ignorado por git): DBs, prosody, certs, filebrowser, imágenes
@@ -177,7 +184,7 @@ Copiá [proyecto_pimienta/.env.example](proyecto_pimienta/.env.example) a `proye
 | **Scripts en `ops/`** | Solo cuando los corrés vos | `vendor-converse.sh` y backups/restores con `curl` usan red **al ejecutarlos**, no mientras corre el stack. |
 | **Instalación / actualización** | Sí, salvo mirror offline | `docker pull` y regenerar `vendor/` necesitan red (o imágenes `.tar` / repo con `vendor/` ya incluido). |
 
-Para comprobar: apagá Internet, recargá `/`, `/chat/`, `/archivos/` y revisá la pestaña *Red* del navegador; no debería haber solicitudes fallidas a CDNs salvo el caso de fuentes del skin.
+Para comprobar: apagá Internet, recargá `/`, `/wiki/`, `/chat/`, `/archivos/` y revisá la pestaña *Red* del navegador; no debería haber solicitudes fallidas a CDNs salvo el caso de fuentes del skin.
 
 ### Inicio limpio (wiki vacía)
 
@@ -208,7 +215,8 @@ cp .env.example .env && nano .env   # contraseñas + LAN_MDNS=1
 
 | URL (vía gateway) | Servicio |
 |-------------------|----------|
-| `http://pimienta.local/` (o `:PUERTO`) | MediaWiki |
+| `http://pimienta.local/` (o `:PUERTO`) | Landing estática (enlaces a wiki, chat y archivos) |
+| `http://pimienta.local/wiki/` | MediaWiki (`/wiki` redirige a `/wiki/`) |
 | `https://pimienta.local/chat/` | Converse.js (**HTTPS** por Web Crypto). `http://…/chat/` redirige con **301** a HTTPS en el gateway. |
 | `http://pimienta.local/archivos` o `.../archivos/` | FileBrowser (redirige sin barra final) |
 
@@ -219,9 +227,17 @@ cd proyecto_pimienta
 ./ops/verify-stack.sh
 ```
 
+Tras cambios en nginx, Compose o scripts, conviene correr la suite completa:
+
+```bash
+./tests/run-all.sh
+```
+
+Solo validación sin stack arriba: `./tests/run-all.sh --static-only`. Detalle en [`proyecto_pimienta/tests/README.md`](proyecto_pimienta/tests/README.md).
+
 Lee `GATEWAY_HTTP_PORT` y el resto del `.env` si existe. Tras cambiar [config/nginx/default.conf](proyecto_pimienta/config/nginx/default.conf), recargá nginx: `docker compose exec gateway nginx -s reload`.
 
-- **Entrada unificada (gateway):** `http://pimienta.local/` (wiki), **`https://pimienta.local/chat/`** (Converse; aceptá el certificado autofirmado una vez), `http://pimienta.local/archivos/` (FileBrowser). Si usás otro puerto, repetilo en HTTP/HTTPS según corresponda.
+- **Entrada unificada (gateway):** `http://pimienta.local/` (landing), **`http://pimienta.local/wiki/`** (MediaWiki), **`https://pimienta.local/chat/`** (Converse; aceptá el certificado autofirmado una vez), `http://pimienta.local/archivos/` (FileBrowser). Si usás otro puerto, repetilo en HTTP/HTTPS según corresponda.
 - **Atajo:** wiki en `http://pimienta.local:8080`, FileBrowser en `http://pimienta.local:8081/archivos/` (el `baseURL` es `/archivos`, no sirve la raíz del puerto 8081 sola)
 - **Chat:** al abrir `/chat/` debería conectarse por WebSocket (en las herramientas de red del navegador, `101` en `/xmpp-websocket`). Cuenta admin XMPP: `admin@accounts.pimienta.local` (contraseña `PROSODY_ADMIN_PASSWORD`).
 
@@ -234,7 +250,7 @@ Ese texto suele ser el **nginx instalado en el sistema operativo** (sitio por de
 3. **Opción A:** liberá el 80 (por ejemplo `sudo systemctl stop nginx` y, si no lo usás, `sudo systemctl disable nginx` en el host), poné en `.env` `GATEWAY_HTTP_PORT=80` (podés dejar `MW_SERVER` vacío o fijar `http://pimienta.local`), ejecutá `docker compose up -d --force-recreate gateway wiki` o `./ops/up-gateway-port80.sh`.
 4. **Opción B:** dejá el nginx del host en el 80 y publicá el gateway en otro puerto; copiá [`.env.example`](proyecto_pimienta/.env.example) a `.env` con `GATEWAY_HTTP_PORT=8088` y `MW_SERVER=http://pimienta.local:8088` (o vacío y entrás siempre con el mismo host:puerto en la barra), ejecutá `docker compose up -d`.
 
-Después corré `./ops/verify-stack.sh` para confirmar que la wiki responde por el gateway y no la página genérica de nginx.
+Después corré `./ops/verify-stack.sh` para confirmar que la landing y la wiki (`/wiki/`) responden por el gateway y no la página genérica de nginx.
 
 **Pendrive / otra ruta:** para servir archivos desde otro directorio del host, cambiá el bind `./archivos:/srv` por la ruta deseada en [proyecto_pimienta/docker-compose.yml](proyecto_pimienta/docker-compose.yml) y reiniciá el servicio `filebrowser`.
 
@@ -257,5 +273,5 @@ Genera un `.tar.gz` en `backups/wiki/exports/` que incluye la base de datos, `Lo
 ### Notas
 
 - El restore incluye preprocesado del SQL (filtra por base `my_wiki` y ajusta collations) para compatibilizar con MariaDB 10.5.
-- Si restaurás con `--backup` y el `.tar.gz` trae `LocalSettings.php`, ese archivo reemplaza el del repo. El `LocalSettings.php` del repo usa `MW_SERVER` si está definido, o el host de la petición; si el backup fija `$wgServer` a otra URL, corregilo o ajustá `.env` y recreá el servicio `wiki` (`docker compose up -d --force-recreate wiki`).
+- Si restaurás con `--backup` y el `.tar.gz` trae `LocalSettings.php`, ese archivo reemplaza el del repo. El `LocalSettings.php` del repo usa `MW_SERVER` si está definido, o el host de la petición; si el backup fija `$wgServer` a otra URL, corregilo o ajustá `.env` y recreá el servicio `wiki` (`docker compose up -d --force-recreate wiki`). Si el backup trae `$wgScriptPath = ""` y la wiki queda en la raíz del contenedor, alinéalo con el repo (`$wgScriptPath = "/wiki"`) para que coincida con el prefijo del gateway.
 - Para resetear datos del servidor XMPP, borrá `./data/prosody` y `./data/prosody-certs`, volvé a ejecutar `./ops/init-chat.sh` y `docker compose up -d`.

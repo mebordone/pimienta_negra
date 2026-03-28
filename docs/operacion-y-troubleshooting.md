@@ -8,11 +8,13 @@ Desde `proyecto_pimienta/`:
 ./ops/verify-stack.sh
 ```
 
-Comprueba HTTP vía gateway (wiki, `/archivos/`); **`/chat/` en HTTP** redirige a **HTTPS** y el script valida el **200** en `https://…/chat/`. No valida WebSocket en profundidad.
+Para una pasada más amplia (compose, shellcheck en `tests/`, favicon e iconos FileBrowser): [`./tests/run-all.sh`](../proyecto_pimienta/tests/run-all.sh) — ver [`tests/README.md`](../proyecto_pimienta/tests/README.md).
+
+Comprueba HTTP vía gateway (landing en `/`, wiki en `/wiki/`, `/archivos/`); **`/chat/` en HTTP** redirige a **HTTPS** y el script valida el **200** en `https://…/chat/`. No valida WebSocket en profundidad.
 
 ## Favicon (wiki, chat, archivos)
 
-El gateway sirve **`/favicon.ico`** y **`/favicon.png`** en **puerto 80 y 443** desde el volumen montado [`config/nginx/favicon.png`](../proyecto_pimienta/config/nginx/favicon.png) (PNG; el navegador lo pide al mismo host que la wiki o `/archivos/`). Tras recrear el contenedor `gateway`, comprobar con `curl -sI http://pimienta.local/favicon.ico` (o tu host/puerto). Para regenerar el icono desde el logo burbuja: `convert config/mediawiki/images/wiki_burbuja_135x135.png -resize 48x48 -strip config/nginx/favicon.png` (desde `proyecto_pimienta/`).
+El gateway sirve **`/favicon.ico`** y **`/favicon.png`** en **puerto 80 y 443** desde el volumen montado [`config/nginx/favicon.png`](../proyecto_pimienta/config/nginx/favicon.png) (PNG; el navegador lo pide al mismo host que la landing, la wiki o `/archivos/`). Tras recrear el contenedor `gateway`, comprobar con `curl -sI http://pimienta.local/favicon.ico` (o tu host/puerto). Para regenerar el icono desde el logo burbuja: `convert config/mediawiki/images/wiki_burbuja_135x135.png -resize 48x48 -strip config/nginx/favicon.png` (desde `proyecto_pimienta/`).
 
 **FileBrowser** no usa `/favicon.ico`: su HTML apunta a **`/archivos/static/img/icons/…`**. El repo incluye branding en [`config/filebrowser/branding/`](../proyecto_pimienta/config/filebrowser/branding) (`branding.files=/branding` vía bootstrap). El **gateway nginx** intercepta `^~ /archivos/static/img/icons/` y sirve esos archivos desde disco: el binario de FileBrowser solo acepta **GET** en `/static/` (muchas peticiones **HEAD** devolvían 404) y su CSP puede interferir con SVG servidos por el upstream. **`favicon.svg` debe llevar el PNG en base64 embebido** (no `href="/favicon.png"`): Chromium y otros ignoran recursos externos dentro de un favicon SVG. Tras cambiar `config/nginx/favicon.png`, regenerá `favicon.svg` (y el resto de iconos si querés) bajo `config/filebrowser/branding/img/icons/` y recreá **gateway** (y **filebrowser** si tocás la DB/branding).
 

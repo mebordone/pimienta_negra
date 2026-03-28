@@ -18,6 +18,7 @@ pimienta_negra/
     │       └── MediaWiki-Sidebar.wikitext   # Barra lateral por defecto (sin chat/archivos en sidebar)
     ├── data/                 # Persistencia (ignorada; ver .gitignore en la raíz)
     ├── ops/                  # Scripts operativos (bash/sh)
+    ├── tests/                # Suite estática + integración HTTP (ver tests/README.md)
     └── backups/wiki/         # Dump SQL de referencia (copia_wiki_real.sql)
 ```
 
@@ -29,6 +30,7 @@ pimienta_negra/
 | `init-chat.sh` | Genera certificados en `data/prosody-certs/`. |
 | `restore-wiki.sh` / `backup-wiki.sh` | Restaurar / empaquetar wiki. |
 | `verify-stack.sh` | Smoke test HTTP del gateway. |
+| `tests/run-all.sh` | Orquestador: `docker compose config`, shellcheck opcional (`tests/`), integración HTTP (incluye `verify-stack`). |
 | `setup-lan-mdns.sh` | Avahi persistente o modo efímero. |
 | `wiki-edit-via-api.sh` | Editar página vía Action API (requiere contraseña Admin wiki). |
 | `ensure-portada-logo.sh` | Copia el logo a `data/.../1/1f/Logo_Wiki_Pimienta.png` si falta (portada). |
@@ -56,7 +58,7 @@ pimienta_negra/
 1. `http://pimienta.local/` (wiki).  
 2. `https://pimienta.local/chat/` (chat usable).  
 3. `http://pimienta.local/archivos/` (login FileBrowser).  
-4. Opcional: `./ops/verify-stack.sh`.
+4. Opcional: `./tests/run-all.sh` o `./ops/verify-stack.sh`.
 
 ## Dónde pedir ayuda
 

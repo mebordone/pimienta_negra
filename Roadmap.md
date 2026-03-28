@@ -20,7 +20,7 @@ Orden recomendado para quien despliega:
 4. **Primer arranque completo:** `./ops/bootstrap-with-restore.sh` (levanta stack, restaura wiki desde `backups/wiki/copia_wiki_real.sql`, instala servicio Avahi si `LAN_MDNS=1`).
 5. **Verificación:** `./ops/verify-stack.sh`.
 6. **En el navegador (PC):**  
-   - Wiki y archivos: **`http://pimienta.local/`** y **`http://pimienta.local/archivos/`** (ajustar puerto si `GATEWAY_HTTP_PORT` ≠ 80).  
+   - Portada del nodo: **`http://pimienta.local/`** (landing); wiki: **`http://pimienta.local/wiki/`**; archivos: **`http://pimienta.local/archivos/`** (ajustar puerto si `GATEWAY_HTTP_PORT` ≠ 80).  
    - Chat: **`https://pimienta.local/chat/`** — aceptar certificado autofirmado; **obligatorio en muchos navegadores/celulares** por Web Crypto (`crypto.subtle`).
 7. **Celular (misma Wi‑Fi):** si no resuelve el nombre, comprobar **mDNS** (`pimienta-mdns`) o entrar por **IP**; si el navegador fuerza HTTPS, el **443** del gateway atiende chat/XMPP y redirige el resto a HTTP.
 8. **Si la IP del nodo cambia (DHCP):** `sudo systemctl restart pimienta-mdns` o `./ops/setup-lan-mdns.sh --install-service` con el script actualizado (redetección de IP al iniciar el servicio).
@@ -123,10 +123,9 @@ Los detalles de cada bloque siguen en las secciones numeradas más abajo. Para *
 
 ---
 
-## 3. Wiki como punto de entrada y reverse proxy
+## 3. Wiki, landing y reverse proxy
 
-> **Decisión de diseño**: en lugar de crear una landing page separada, la **Página Principal de la wiki**
-> actúa como punto de entrada del nodo. Un contenedor **nginx** (`gateway`) en el puerto publicado (por defecto **80**, configurable con `GATEWAY_HTTP_PORT`) actúa como reverse proxy.
+> **Decisión de diseño**: la **entrada HTTP en `/`** es una **landing estática** (`config/landing/`, `config.json` opcional) con enlaces claros a wiki, chat y archivos. **MediaWiki** se publica bajo **`/wiki/`** (`$wgScriptPath = "/wiki"` y `proxy_pass` con prefijo quitado en nginx). Un contenedor **nginx** (`gateway`) en el puerto publicado (por defecto **80**, configurable con `GATEWAY_HTTP_PORT`) actúa como reverse proxy.
 
 ### 3.1. Wiki Pimienta (MediaWiki)
 
@@ -137,10 +136,10 @@ Los detalles de cada bloque siguen en las secciones numeradas más abajo. Para *
 
 ### 3.2. Gateway y rutas — *entregado (infra + contenido wiki de referencia)*
 
-- **Objetivo**: al abrir `http://pimienta.local/` (o el host y puerto que corresponda) se accede a la wiki; archivos en `/archivos/`; chat en **`https://pimienta.local/chat/`** (recomendado) o HTTP en entornos que no exijan contexto seguro.
+- **Objetivo**: al abrir `http://pimienta.local/` se ve la landing; la wiki está en **`/wiki/`**; archivos en `/archivos/`; chat en **`https://pimienta.local/chat/`** (recomendado) o HTTP en entornos que no exijan contexto seguro.
 - **Reverse proxy**: [proyecto_pimienta/config/nginx/default.conf](proyecto_pimienta/config/nginx/default.conf)
-  - **Puerto 80:** `/` → MediaWiki; `/chat/` → Converse; `/archivos/` → FileBrowser (ruta completa `/archivos/` sin strip incorrecto; `baseURL=/archivos`); `/xmpp-websocket` y `/http-bind` → Prosody **:5280** (HTTP interno).
-  - **Puerto 443 (TLS):** mismas rutas de **chat y XMPP** que en 80; el resto redirige a HTTP para no forzar certificado en toda la wiki.
+  - **Puerto 80:** `/` → landing estática; `/wiki/` → MediaWiki (prefijo quitado hacia el contenedor); `/chat/` → Converse; `/archivos/` → FileBrowser (ruta completa `/archivos/` sin strip incorrecto; `baseURL=/archivos`); `/xmpp-websocket` y `/http-bind` → Prosody **:5280** (HTTP interno).
+  - **Puerto 443 (TLS):** mismas rutas de **chat y XMPP** que en 80; el resto (incl. `/`) redirige a HTTP para no forzar certificado en landing/wiki/archivos.
 - **Atajos de desarrollo**: la wiki sigue expuesta en **8080** y FileBrowser en **8081** en el host (opcional).
 - **Wiki (dump `copia_wiki_real.sql`):** portada con enlaces a chat (HTTPS) y archivos; páginas Maestranza/Bitácora/Portal alineadas a MariaDB, `docker compose`, scripts de backup/restore y sin secretos en claro. Mantener coherencia al cambiar URLs o stack.
 
@@ -281,7 +280,7 @@ Los detalles de cada bloque siguen en las secciones numeradas más abajo. Para *
 
 | Mejora | Impacto |
 |--------|---------|
-| **Portal unificado / landing page** (HTML estático en `/`, wiki movida a `/wiki/`) | Entrada clara con botones grandes; no confunde con MediaWiki a quien solo quiere chatear. Requiere cambiar `MW_SERVER` y ajustar nginx. |
+| **Portal unificado / landing page** (HTML estático en `/`, wiki en `/wiki/`) | *Entregado en el repo* (landing + prefijo wiki). Pendientes opcionales: short URLs, redirecciones desde enlaces viejos en raíz, health `/status`. |
 | **Código QR** impreso o en la wiki con la URL del nodo | Cero tipeo desde el celular; ideal para talleres y pegatinas. |
 | **PWA mínima** (`manifest.json` + service worker básico en `/chat/`) | "Instalar" el chat como app en el celular; mejor UX y evita redirecciones HTTPS del navegador. |
 | **Healthcheck / status page** (`/status` en nginx) | Para la cuidadora del nodo, sin terminal: muestra si wiki/chat/archivos responden. |
