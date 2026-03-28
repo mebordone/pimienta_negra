@@ -101,12 +101,13 @@ echo ""
 echo "═══════════════════════════════════════════════════════"
 echo " Listo. Verificá con:  ./ops/verify-stack.sh"
 if [[ -n "${MW_SERVER:-}" ]]; then
-  MW="$MW_SERVER"
+  MW_BASE="$MW_SERVER"
 else
-  MW="http://pimienta.local (o http://<IP-LAN> — wiki sin redirigir si MW_SERVER vacío)"
+  MW_BASE="http://pimienta.local (o http://<IP-LAN> — mismo host en barra si MW_SERVER vacío)"
 fi
-CHAT_HINT="https://pimienta.local/chat/ (o https://<IP-LAN>/chat/ — mismo host que la wiki)"
-echo " Wiki:     ${MW}/"
+CHAT_HINT="https://pimienta.local/chat/ (o https://<IP-LAN>/chat/ — mismo host que el gateway)"
+echo " Landing:  ${MW_BASE}/"
+echo " Wiki:     ${MW_BASE}/wiki/"
 echo " Chat:     ${CHAT_HINT}   (HTTPS — requerido en muchos navegadores/celulares)"
-echo " Archivos: entrá con el mismo host que la wiki + /archivos/"
+echo " Archivos: mismo host + /archivos/"
 echo "═══════════════════════════════════════════════════════"
