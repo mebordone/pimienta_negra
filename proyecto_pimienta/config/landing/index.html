@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Wiki Pimienta</title>
+  <link rel="stylesheet" href="/landing.css">
+</head>
+<body id="pimienta-landing" data-pimienta-landing>
+  <header class="hero">
+    <img class="hero-logo" id="landing-logo" src="/assets/logo.png" alt="Wiki Pimienta" width="135" height="135">
+    <h1 id="landing-title">Wiki Pimienta</h1>
+    <p class="hero-desc" id="landing-desc">Nodo comunitario: documentación en la wiki, chat en tiempo real y archivos compartidos en la red local.</p>
+  </header>
+
+  <main>
+    <h2 class="visually-hidden">Accesos</h2>
+    <ul class="cards">
+      <li><a class="card" href="/wiki/">Wiki</a></li>
+      <li><a class="card" href="/chat/">Chat</a></li>
+      <li><a class="card" href="/archivos/">Archivos</a></li>
+    </ul>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-brand">
+      <img class="footer-logo" src="/assets/logo.png" width="64" height="64" alt="" decoding="async">
+      <div class="footer-brand-text">
+        <p class="footer-lead">
+          <strong>Nodo Pimienta Negra</strong> — software libre y documentación en
+          <a href="https://github.com/mebordone/pimienta_negra" rel="noopener noreferrer">GitHub (pimienta_negra)</a>.
+        </p>
+        <p class="footer-lineage">
+          Basado en el proyecto <strong>Aguaribay / Pimienta Rosa</strong>:
+          <a href="https://github.com/redconectividadfeministaresile-alt/pimienta_rosa/tree/main/proyecto_pimienta" rel="noopener noreferrer">código en GitHub</a>.
+        </p>
+      </div>
+    </div>
+    <section class="footer-principles" aria-labelledby="footer-principles-heading">
+      <h2 id="footer-principles-heading" class="footer-principles-title">Principios del nodo</h2>
+      <ul>
+        <li><strong>Soberanía tecnológica:</strong> no somos usuarias pasivas; somos maestras de nuestras propias herramientas.</li>
+        <li><strong>Memoria territorial:</strong> aquí guardamos el saber y las historias del territorio para que el tiempo no los borre.</li>
+        <li><strong>Cuidado colectivo:</strong> lo que se escribe fortalece la red; nos cuidamos entre nosotras y cuidamos la red que nos comunica.</li>
+      </ul>
+      <blockquote class="footer-quote">
+        <p>La tecnología es nuestra cuando la entendemos y la ponemos al servicio de la vida en el territorio.</p>
+      </blockquote>
+    </section>
+  </footer>
+
+  <script>
+    (function () {
+      var titleEl = document.getElementById('landing-title');
+      var descEl = document.getElementById('landing-desc');
+      var logoEl = document.getElementById('landing-logo');
+      var defaultLogoSrc = '/assets/logo.png';
+
+      function resolveLogoUrl(value) {
+        if (!value || typeof value !== 'string') return '';
+        var v = value.trim();
+        if (!v) return '';
+        if (/^https?:\/\//i.test(v)) return v;
+        if (v.charAt(0) === '/') return v;
+        return '/' + v.replace(/^\.\//, '');
+      }
+
+      function applyConfig(data) {
+        if (!data || typeof data !== 'object') return;
+        if (typeof data.node_name === 'string' && data.node_name.trim()) {
+          titleEl.textContent = data.node_name.trim();
+          document.title = data.node_name.trim();
+        }
+        if (typeof data.node_description === 'string' && data.node_description.trim()) {
+          descEl.textContent = data.node_description.trim();
+        }
+        if (Object.prototype.hasOwnProperty.call(data, 'node_logo')) {
+          if (typeof data.node_logo === 'string' && data.node_logo.trim() === '') {
+            logoEl.setAttribute('hidden', '');
+            logoEl.removeAttribute('src');
+            logoEl.alt = '';
+          } else {
+            var logoUrl = resolveLogoUrl(data.node_logo) || defaultLogoSrc;
+            logoEl.src = logoUrl;
+            logoEl.alt = (titleEl.textContent || 'Logo') + '';
+            logoEl.removeAttribute('hidden');
+          }
+        }
+      }
+
+      fetch('/config.json', { credentials: 'same-origin' })
+        .then(function (r) { return r.ok ? r.json() : Promise.reject(new Error('config')); })
+        .then(applyConfig)
+        .catch(function () { /* defaults in HTML */ });
+    })();
+  </script>
+</body>
+</html>
