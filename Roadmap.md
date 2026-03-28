@@ -204,6 +204,11 @@ Los detalles de cada bloque siguen en las secciones numeradas más abajo. Para *
 - **Solución**: en el bloque `server :80` de nginx, `/chat` y `/chat/` redirigen con **301** a `https://$http_host/…` ([`default.conf`](proyecto_pimienta/config/nginx/default.conf)). El bloque **443** sigue sirviendo Converse en `/chat/` y XMPP en `/http-bind` y `/xmpp-websocket`.
 - **Verificación**: `./ops/verify-stack.sh` comprueba el redirect HTTP→HTTPS y un **200** en `https://…/chat/` (con `-k` por certificado autofirmado).
 
+### 5.1b. Landing: credenciales de FileBrowser y aviso antes del chat HTTPS — *entregado*
+
+- **Problema**: las personas no sabían el usuario/contraseña del invitado en `/archivos/` ni por qué el navegador marcaba el chat como “no seguro” al pasar a HTTPS.
+- **Solución**: en [`config/landing/index.html`](proyecto_pimienta/config/landing/index.html) y estilos asociados, texto discreto bajo **Archivos** (valores desde `guest_username` / `guest_password` en `config.json`, por defecto `pimienta`); botón **Chat** que abre un `<dialog>` nativo explicando el certificado autofirmado y luego redirige a `https://<hostname>/chat/`. Sin dependencias CDN. Detalle en [`config/landing/README.md`](proyecto_pimienta/config/landing/README.md).
+
 ### 5.2. Portada de la wiki: bienvenida clara y botones de acceso — *entregado*
 
 - **Problema**: la Página Principal arranca con *"MediaWiki se ha instalado."* (texto por defecto) y los enlaces a chat/archivos están al final. Una persona no técnica no sabe qué hacer. Además, el **logo del encabezado** (skin Minerva) se ve **demasiado grande**, se sale de la franja del header y **solapa el título** y el contenido en móvil y en escritorio.
@@ -280,7 +285,7 @@ Los detalles de cada bloque siguen en las secciones numeradas más abajo. Para *
 
 | Mejora | Impacto |
 |--------|---------|
-| **Portal unificado / landing page** (HTML estático en `/`, wiki en `/wiki/`) | *Entregado en el repo* (landing + prefijo wiki). Pendientes opcionales: short URLs, redirecciones desde enlaces viejos en raíz, health `/status`. |
+| **Portal unificado / landing page** (HTML estático en `/`, wiki en `/wiki/`) | *Entregado en el repo* (landing + prefijo wiki + credenciales invitado + modal chat). Pendientes opcionales: short URLs, redirecciones desde enlaces viejos en raíz, health `/status`. |
 | **Código QR** impreso o en la wiki con la URL del nodo | Cero tipeo desde el celular; ideal para talleres y pegatinas. |
 | **PWA mínima** (`manifest.json` + service worker básico en `/chat/`) | "Instalar" el chat como app en el celular; mejor UX y evita redirecciones HTTPS del navegador. |
 | **Healthcheck / status page** (`/status` en nginx) | Para la cuidadora del nodo, sin terminal: muestra si wiki/chat/archivos responden. |

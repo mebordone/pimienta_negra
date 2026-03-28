@@ -13,7 +13,7 @@ pimienta_negra/
     ├── .env.example
     ├── archivos/             # Árbol compartido FileBrowser (contenido local)
     ├── config/               # nginx, prosody, mediawiki, landing, converse, filebrowser
-    │   ├── landing/          # HTML/CSS/JSON y assets de la portada en /
+    │   ├── landing/          # HTML/CSS/JSON, modal chat, credenciales invitado; assets de la portada en /
     │   └── mediawiki/
     │       ├── apache-wiki-path.conf       # Alias /wiki (coherente con $wgScriptPath)
     │       ├── portada-principal.wikitext  # «Página principal» (maintenance/run.php edit)
@@ -58,7 +58,7 @@ pimienta_negra/
 
 ## Pruebas manuales mínimas tras un cambio de infra
 
-1. `http://pimienta.local/` (landing).  
+1. `http://pimienta.local/` (landing: credenciales bajo Archivos; Chat abre modal y luego HTTPS).  
 2. `http://pimienta.local/wiki/` (wiki con estilos y navegación).  
 3. `https://pimienta.local/chat/` (chat usable).  
 4. `http://pimienta.local/archivos/` (login FileBrowser).  

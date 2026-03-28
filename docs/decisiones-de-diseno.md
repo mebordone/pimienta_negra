@@ -7,6 +7,7 @@ Resumen de elecciones que condicionan el código y el despliegue. Detalle histó
 | Decisión | Motivo breve |
 |----------|----------------|
 | **Landing estática en `/` + MediaWiki en `/wiki/`** | Entrada clara (HTML + `config.json`); la wiki sigue siendo el contenido colaborativo; `$wgScriptPath = "/wiki"` alineado al gateway. |
+| **Credenciales invitado visibles bajo Archivos + modal antes del chat** | Reduce fricción: nadie adivina usuario/contraseña de FileBrowser; el aviso HTTPS/cert autofirmado se anticipa en un `<dialog>` nativo antes de `https://…/chat/` (`guest_username` / `guest_password` opcionales en `config.json`). |
 | **`Alias /wiki` en Apache** (contenedor wiki) | Los PHP viven en la raíz de DocumentRoot; sin alias, `/wiki/load.php` cae en `index.php` y rompe ResourceLoader (CSS/JS). |
 | **Synapse + PostgreSQL → Prosody** (chat) | Menor RAM, sin DB dedicada pesada; login **anónimo** posible; chat **sin MAM** (efímero en servidor), alineado a privacidad. |
 | **Converse.js** en el navegador | Cliente web estándar XMPP; assets servidos **desde el repo** (`vendor/`) para uso 100 % LAN sin CDN. |

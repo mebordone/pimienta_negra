@@ -4,7 +4,7 @@ Fork de [Proyecto Aguaribay (Pimienta Rosa)](https://github.com/mebordone/pimien
 
 ## En 30 segundos
 
-Pimienta Negra es un nodo comunitario para eventos, barrios o espacios educativos que funciona en red local. La idea es que cualquier persona en la LAN pueda abrir `pimienta.local` y, desde la **landing** en `/`, acceder a tres servicios:
+Pimienta Negra es un nodo comunitario para eventos, barrios o espacios educativos que funciona en red local. La idea es que cualquier persona en la LAN pueda abrir `pimienta.local` y, desde la **landing** en `/`, acceder a tres servicios. En esa portada, bajo **Archivos**, se muestran las credenciales del usuario invitado de FileBrowser (por defecto `pimienta` / `pimienta`, configurables vía `config.json` o `.env`). El botón **Chat** abre un aviso sobre el certificado HTTPS local antes de ir a `https://…/chat/`.
 
 - **Wiki** (`/wiki/`) para documentar, escribir notas y dejar comentarios.
 - **Chat** (`/chat/`) para anuncios y coordinación en tiempo real.
@@ -25,7 +25,7 @@ Pimienta Negra es un nodo comunitario para eventos, barrios o espacios educativo
 - **Acceso unificado** por rutas en `pimienta.local` (`/`, `/wiki/`, `/chat/`, `/archivos/`) en vez de depender de puertos.
 - **FileBrowser** con usuarios configurables para compartir archivos en la red local.
 - **mDNS persistente** para resolver `pimienta.local` desde otras compus/celulares en la LAN.
-- **Landing en `/`** (HTML estático + `config.json`) y **wiki en `/wiki/`** vía nginx y `$wgScriptPath`.
+- **Landing en `/`** (HTML estático + `config.json`: nombre, descripción, logo, credenciales invitado opcionales, modal previo al chat) y **wiki en `/wiki/`** vía nginx y `$wgScriptPath`.
 - **Identidad visual unificada** (favicon) entre wiki, chat y archivos.
 - **Suite de tests** (`tests/run-all.sh`, `verify-stack.sh`) y **CI** en GitHub Actions para validar compose y HTTP del gateway.
 - **Documentacion tecnica** ampliada (arquitectura, operacion, troubleshooting, roadmap y changelog).
@@ -89,7 +89,7 @@ proyecto_pimienta/
 │   │   └── conf.d/               # Includes opcionales
 │   ├── nginx/
 │   │   └── default.conf          # Reverse proxy
-│   ├── landing/                  # Página en / (index.html, config.json, styles.css, assets/logo.png)
+│   ├── landing/                  # Página en / (index.html, config.json, styles.css, modal chat, assets/logo.png)
 │   └── converse/
 │       ├── index.html            # Cliente Converse.js (ruta /chat/); assets en vendor/
 │       └── vendor/               # converse.min.js/css, libsignal, locales es, emoji (sin CDN)
@@ -218,11 +218,11 @@ cp .env.example .env && nano .env   # contraseñas + LAN_MDNS=1
 
 | URL (vía gateway) | Servicio |
 |-------------------|----------|
-| `http://pimienta.local/` (o `:PUERTO`) | Landing estática (enlaces a wiki, chat y archivos) |
+| `http://pimienta.local/` (o `:PUERTO`) | Landing estática (enlaces a wiki y archivos; **Chat** abre un diálogo y luego `https://…/chat/`) |
 | `http://pimienta.local/wiki/` | MediaWiki (`/wiki` redirige a `/wiki/`) |
 | `https://pimienta.local/chat/` | Converse.js (**HTTPS** por Web Crypto). `http://…/chat/` redirige con **301** a HTTPS en el gateway. |
 | `http://pimienta.local/archivos` o `.../archivos/` | FileBrowser (redirige sin barra final) |
-| `http://pimienta.local/config.json` | Config opcional de la landing (`node_name`, `node_description`, `node_logo`) |
+| `http://pimienta.local/config.json` | Config opcional de la landing (`node_name`, `node_description`, `node_logo`, opcionalmente `guest_username` / `guest_password` para el texto bajo Archivos) |
 
 Comprobación automática (usa `pimienta.local` con `curl --resolve` hacia `127.0.0.1`, no exige que `/etc/hosts` esté bien en el momento del test):
 
@@ -241,7 +241,7 @@ Solo validación sin stack arriba: `./tests/run-all.sh --static-only`. Detalle e
 
 Lee `GATEWAY_HTTP_PORT` y el resto del `.env` si existe. Tras cambiar [config/nginx/default.conf](proyecto_pimienta/config/nginx/default.conf), recargá nginx: `docker compose exec gateway nginx -s reload`.
 
-- **Entrada unificada (gateway):** `http://pimienta.local/` (landing), **`http://pimienta.local/wiki/`** (MediaWiki), **`https://pimienta.local/chat/`** (Converse; aceptá el certificado autofirmado una vez), `http://pimienta.local/archivos/` (FileBrowser). Si usás otro puerto, repetilo en HTTP/HTTPS según corresponda.
+- **Entrada unificada (gateway):** `http://pimienta.local/` (landing; credenciales de invitado visibles bajo Archivos), **`http://pimienta.local/wiki/`** (MediaWiki), **`https://pimienta.local/chat/`** (Converse; desde la landing el botón Chat muestra antes un aviso sobre el certificado autofirmado; aceptalo una vez en el navegador), `http://pimienta.local/archivos/` (FileBrowser). Si usás otro puerto, repetilo en HTTP/HTTPS según corresponda.
 - **Atajo:** wiki en `http://pimienta.local:8080`, FileBrowser en `http://pimienta.local:8081/archivos/` (el `baseURL` es `/archivos`, no sirve la raíz del puerto 8081 sola)
 - **Chat:** al abrir `/chat/` debería conectarse por WebSocket (en las herramientas de red del navegador, `101` en `/xmpp-websocket`). Cuenta admin XMPP: `admin@accounts.pimienta.local` (contraseña `PROSODY_ADMIN_PASSWORD`).
 

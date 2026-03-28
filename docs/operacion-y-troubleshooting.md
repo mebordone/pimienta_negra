@@ -12,6 +12,11 @@ Para una pasada más amplia (compose, shellcheck en `tests/`, favicon e iconos F
 
 Comprueba HTTP vía gateway (landing en `/`, wiki en `/wiki/`, `/archivos/`); **`/chat/` en HTTP** redirige a **HTTPS** y el script valida el **200** en `https://…/chat/`. No valida WebSocket en profundidad.
 
+## Landing (`/`): credenciales de archivos y acceso al chat
+
+- Bajo el botón **Archivos** la portada muestra el texto de acceso invitado a FileBrowser (por defecto **usuario y contraseña `pimienta`**). Los valores salen de [`config/landing/config.json`](../proyecto_pimienta/config/landing/config.json) si definís `guest_username` y `guest_password`; si no, coinciden con los defaults de `FILEBROWSER_INVITADO_*` en compose. Tras cambiar `.env`, recreá **filebrowser** y, si querés que la landing muestre otros textos sin tocar el HTML, ajustá esas claves en `config.json`.
+- El botón **Chat** no enlaza directo: abre un **diálogo** (sin librerías externas) que explica el aviso del navegador por **certificado autofirmado** en HTTPS local; al confirmar, redirige a `https://<mismo hostname>/chat/` (puerto HTTPS por defecto del navegador, normalmente **443**). Si mapeás el gateway HTTPS a otro puerto en el host, abrí el chat con la URL completa que corresponda.
+
 ## Favicon (wiki, chat, archivos)
 
 El gateway sirve **`/favicon.ico`** y **`/favicon.png`** en **puerto 80 y 443** desde el volumen montado [`config/nginx/favicon.png`](../proyecto_pimienta/config/nginx/favicon.png) (PNG; el navegador lo pide al mismo host que la landing, la wiki o `/archivos/`). Tras recrear el contenedor `gateway`, comprobar con `curl -sI http://pimienta.local/favicon.ico` (o tu host/puerto). Para regenerar el icono desde el logo burbuja: `convert config/mediawiki/images/wiki_burbuja_135x135.png -resize 48x48 -strip config/nginx/favicon.png` (desde `proyecto_pimienta/`).
@@ -51,7 +56,7 @@ El gateway sirve **`/favicon.ico`** y **`/favicon.png`** en **puerto 80 y 443** 
 | Síntoma | Causa probable | Qué hacer |
 |---------|----------------|-----------|
 | Pantalla en blanco / no carga tras el cartel | JS o assets 404 | Revisar que `/chat/vendor/` exista y nginx sirva estáticos. |
-| Entra pero al poner apodo se queda cargando | **`crypto.subtle` undefined** | Abrir **`https://pimienta.local/chat/`** (o `https://host:puerto/chat/`), aceptar certificado autofirmado. No usar solo `http://` salvo `localhost`. |
+| Entra pero al poner apodo se queda cargando | **`crypto.subtle` undefined** | Abrir **`https://pimienta.local/chat/`** (o `https://host:puerto/chat/`), aceptar certificado autofirmado. No usar solo `http://` salvo `localhost`. Desde la **landing**, usá el botón Chat (muestra antes el aviso sobre el certificado). |
 | WebSocket cierra enseguida | Proxy o Prosody | Logs: `docker compose logs prosody gateway`; comprobar `wss://` cuando la página es HTTPS. |
 
 Avisos habituales en consola (si el chat **funciona**): mapas de fuente faltantes, notificaciones sin gesto de usuario, carbons no soportados, fuentes TTF rechazadas por el navegador — en general **no bloquean** el uso.

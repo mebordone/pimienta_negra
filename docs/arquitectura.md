@@ -38,8 +38,8 @@ Además, **`/chat/`** la sirve el mismo **nginx** desde el volumen `config/conve
 
 | Ruta | Destino |
 |------|---------|
-| `/` | Landing estática (`config/landing/`, vía volumen en el gateway). |
-| `/config.json`, `/landing.css`, `/assets/…` | Archivos de la landing (sin pasar por MediaWiki). |
+| `/` | Landing estática (`config/landing/`, vía volumen en el gateway): enlaces a wiki y archivos; **Chat** abre un diálogo y redirige a HTTPS; credenciales de invitado bajo **Archivos** (texto desde `config.json` o defaults). |
+| `/config.json`, `/landing.css`, `/assets/…` | Archivos de la landing (sin pasar por MediaWiki). `config.json`: `node_*` y opcionalmente `guest_username` / `guest_password`. |
 | `/wiki/…` | MediaWiki en el contenedor `wiki` (**URI completa** reenviada; Apache resuelve `/wiki` → DocumentRoot). |
 | `/favicon.ico`, `/favicon.png` | PNG único del nodo (misma identidad en wiki, chat y pestañas que piden `/favicon.ico`). |
 | `/archivos/static/img/icons/` | Mismos archivos que `config/filebrowser/branding/img/icons/` (HEAD/GET; evita limitaciones del upstream FileBrowser). |

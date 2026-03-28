@@ -44,7 +44,7 @@ Lee `GATEWAY_HTTP_PORT` del `.env` igual que `verify-stack.sh`. El script espera
 | `integration/10-verify-stack.sh` | Delega en [`ops/verify-stack.sh`](../ops/verify-stack.sh) |
 | `integration/20-favicon.sh` | `HEAD`/`GET` `/favicon.ico` y `/favicon.png` |
 | `integration/30-filebrowser-icons.sh` | `HEAD`/`GET` `/archivos/static/img/icons/favicon.svg` |
-| `integration/40-landing-config.sh` | `GET` `/config.json` y validación mínima (`node_name`) |
+| `integration/40-landing-config.sh` | `GET` `/config.json` y validación mínima (`node_name`); no valida `guest_*` ni el modal del Chat (comprobación manual en el navegador). |
 
 ## Qué no cubre
 
