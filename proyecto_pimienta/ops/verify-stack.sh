@@ -55,20 +55,39 @@ code_and_body() {
 echo ""
 echo "=== HTTP vía gateway (http://${HOST}:${PORT}) ==="
 
-# Raíz: MediaWiki suele 301/302; seguimos hasta 200
+# Raíz: landing estática (no debe confundirse con nginx por defecto ni con la wiki).
 root_final="$(curl -sS -o "$BODY" -w "%{http_code}" --resolve "$RESOLVE" \
-  -L --max-redirs 5 "http://${HOST}:${PORT}/")"
+  "http://${HOST}:${PORT}/")"
 if [[ "$root_final" != "200" ]]; then
-  fail "GET / (tras redirects) esperaba 200, obtuve ${root_final}"
+  fail "GET / esperaba 200, obtuve ${root_final}"
 fi
 if grep -q "Welcome to nginx!" "$BODY" 2>/dev/null; then
   warn_nginx_host
   fail "La respuesta en / parece la página por defecto de nginx del sistema (no el gateway del proyecto)."
 fi
-if ! grep -qiE 'mediawiki|mw-|Página principal|Main_Page|DOCTYPE' "$BODY"; then
-  echo "ADVERTENCIA: el cuerpo de / no coincide claramente con MediaWiki; revisá manualmente." >&2
+if ! grep -q 'id="pimienta-landing"' "$BODY" 2>/dev/null && ! grep -q 'data-pimienta-landing' "$BODY" 2>/dev/null; then
+  fail "GET / no contiene el marcador de landing (id/data pimienta-landing)."
 fi
-echo "GET / (tras redirects) -> 200 OK"
+echo "GET / -> 200 OK (landing)"
+
+# Wiki bajo /wiki/ (MediaWiki puede redirigir internamente).
+wiki_final="$(curl -sS -o "$BODY" -w "%{http_code}" --resolve "$RESOLVE" \
+  -L --max-redirs 10 "http://${HOST}:${PORT}/wiki/")"
+if [[ "$wiki_final" != "200" ]]; then
+  fail "GET /wiki/ (tras redirects) esperaba 200, obtuve ${wiki_final}"
+fi
+if ! grep -qiE 'mediawiki|mw-|Página principal|Main_Page|DOCTYPE' "$BODY" 2>/dev/null; then
+  echo "ADVERTENCIA: el cuerpo de /wiki/ no coincide claramente con MediaWiki; revisá manualmente." >&2
+fi
+echo "GET /wiki/ (tras redirects) -> 200 OK"
+
+loc_wiki="$(curl -sS -o /dev/null -w "%{redirect_url}" --resolve "$RESOLVE" \
+  "http://${HOST}:${PORT}/wiki")"
+code_wiki="$(curl -sS -o /dev/null -w "%{http_code}" --resolve "$RESOLVE" \
+  "http://${HOST}:${PORT}/wiki")"
+[[ "$code_wiki" =~ ^30[12]$ ]] || fail "GET /wiki esperaba 301/302, obtuve ${code_wiki}"
+[[ "$loc_wiki" == *"/wiki/"* ]] || fail "GET /wiki Location debería apuntar a /wiki/, fue: ${loc_wiki}"
+echo "GET /wiki -> ${code_wiki} -> ${loc_wiki}"
 
 code="$(code_and_body "/chat/")"
 [[ "$code" == "301" ]] || [[ "$code" == "302" ]] || fail "GET /chat/ (HTTP) esperaba 301/302 a HTTPS, obtuve ${code}"
