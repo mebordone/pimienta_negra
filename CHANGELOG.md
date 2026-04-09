@@ -4,6 +4,11 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/). L
 
 ---
 
+### 2026-04-09
+
+- fix(ops): `bootstrap-with-restore.sh` — `restore-wiki` tras MariaDB y **antes** del check HTTP (arranque en frío con BD vacía)
+- docs: operación y contribución — orden bootstrap / wiki 500 hasta importar SQL
+
 ### 2026-03-30
 
 - fix(ops): `instalar_dependencias.sh` — reintentar `apt update` con `--allow-releaseinfo-change` si un repo cambia prioridad InRelease (p. ej. Mint / jammy-backports)

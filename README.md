@@ -98,7 +98,7 @@ proyecto_pimienta/
 │   ├── prosody-entrypoint.sh     # Registro admin + arranque Prosody
 │   ├── backup-wiki.sh            # Genera backup .tar.gz de la wiki
 │   ├── restore-wiki.sh           # Restaura wiki desde .tar.gz o .sql
-│   ├── bootstrap-with-restore.sh # init-chat + compose up + restore-wiki (primer arranque con contenido)
+│   ├── bootstrap-with-restore.sh # init-chat + compose up + MariaDB + restore-wiki + check HTTP + mDNS opcional
 │   ├── instalar_dependencias.sh  # Primera vez en el host: apt + Docker/Compose v2 + Avahi (ejecutar con sudo)
 │   ├── verify-stack.sh           # Comprueba landing, /wiki/, /chat, /archivos vía gateway (curl + --resolve)
 │   ├── up-gateway-port80.sh      # Tras liberar :80 en el host, levanta gateway y ejecuta verify-stack
@@ -224,7 +224,7 @@ cp .env.example .env && nano .env   # contraseñas + LAN_MDNS=1
 # ./ops/bootstrap-with-restore.sh --backup ./backups/wiki/exports/wiki-backup-<fecha>.tar.gz
 ```
 
-`bootstrap-with-restore.sh` hace todo: certificados, `docker compose up`, espera servicios, restaura wiki e instala el servicio Avahi si `LAN_MDNS=1`.
+`bootstrap-with-restore.sh` hace todo: certificados, `docker compose up`, espera MariaDB, **restaura la wiki** (import SQL; con BD vacía la wiki daría 500 hasta ahí), comprueba que el contenedor `wiki` responde por HTTP e instala el servicio Avahi si `LAN_MDNS=1`.
 
 ### Verificación
 

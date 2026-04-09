@@ -77,6 +77,7 @@ Si la wiki carga como lista de enlaces sin diseño Minerva/Vector:
 
 ## Wiki: restore y dumps
 
+- **`bootstrap-with-restore.sh`** espera a MariaDB, ejecuta **`restore-wiki`** y recién después comprueba HTTP en el contenedor `wiki`. Con la base **vacía**, MediaWiki suele responder **500** en `/` hasta importar el SQL; por eso el restore va **antes** del check (arranque en frío).
 - Si aparece *“filtrado por USE my_wiki dejó el SQL vacío”* en versiones viejas del script, actualizar `restore-wiki.sh` desde el repo (lógica para dumps sin `USE`).  
 - Restaurar siempre con el dump **`copia_wiki_real.sql`** versionado o con un `.tar.gz` generado por `backup-wiki.sh`.
 - **Logo en la portada invisible / imagen rota** (`Archivo:Logo_Wiki_Pimienta.png`): el SQL trae el registro del archivo, pero el PNG vive en `data/mediawiki/images/1/1f/`. Si restauraste solo la base o vaciaste `data/mediawiki/images/`, ejecutá desde `proyecto_pimienta/`: `./ops/ensure-portada-logo.sh` (copia desde `config/mediawiki/images/wiki_burbuja_135x135.png`). Alternativa: `docker compose exec wiki php maintenance/run.php importImages /ruta/con/un/solo/png` como al importar la primera vez.
