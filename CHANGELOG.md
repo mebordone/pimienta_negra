@@ -6,6 +6,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/). L
 
 ### 2026-03-30
 
+- fix(ops): `instalar_dependencias.sh` — reintentar `apt update` con `--allow-releaseinfo-change` si un repo cambia prioridad InRelease (p. ej. Mint / jammy-backports)
 - feat(ops): `instalar_dependencias.sh` — apt + Docker/Compose v2 + Avahi; repo Docker oficial si falta `docker-compose-plugin` (p. ej. Linux Mint)
 - docs: README inicio rápido en 4 pasos, árbol del repo y `docs/contribucion.md` con el script
 

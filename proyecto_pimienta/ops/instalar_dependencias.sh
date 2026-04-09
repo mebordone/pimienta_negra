@@ -60,8 +60,17 @@ apt_install() {
 	apt-get install -y --no-install-recommends "$@"
 }
 
+# Cuando un repo cambia Pin-Priority en InRelease, apt falla hasta aceptar el cambio (frecuente en Mint).
+apt_update() {
+	if apt-get update -qq; then
+		return 0
+	fi
+	echo "Reintentando apt update con --allow-releaseinfo-change (prioridad de repo cambió; típico en Linux Mint/Ubuntu)…" >&2
+	apt-get update -qq --allow-releaseinfo-change
+}
+
 echo "=== apt update ==="
-apt-get update -qq
+apt_update
 
 echo "=== Paquetes base (git, openssl, curl, gnupg) ==="
 BASE_PKGS=(git openssl ca-certificates curl gnupg)
@@ -108,7 +117,7 @@ else
 		chmod a+r /etc/apt/keyrings/docker.gpg
 		echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/${DOCKER_DISTRO} ${DOCKER_CODENAME} stable" \
 			>/etc/apt/sources.list.d/docker.list
-		apt-get update -qq
+		apt_update
 		apt_install docker-ce docker-ce-cli containerd.io docker-compose-plugin
 	fi
 	docker_compose_ok || die "«docker compose» sigue sin funcionar. Revisá la salida de: docker compose version"
