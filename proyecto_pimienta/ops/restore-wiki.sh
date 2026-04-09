@@ -101,8 +101,9 @@ if [[ -n "$backup_tar" ]]; then
   fi
 else
   if [[ ! -f "$dump_path" ]]; then
-    echo "No existe el dump: $dump_path" >&2
-    exit 1
+    echo "Aviso: no existe dump en '$dump_path'. La wiki arrancará vacía (sin restore)."
+    echo "  Para restaurar contenido: ./ops/restore-wiki.sh --dump <ruta.sql>"
+    exit 0
   fi
 
   # Aseguramos que al menos el logo esperado exista en el directorio persistente.

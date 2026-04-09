@@ -3,7 +3,7 @@ services:
     image: mariadb:10.5
     restart: always
     environment:
-      - MYSQL_ROOT_PASSWORD=pimienta_rosa
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASS:-pimienta_rosa}
       - MYSQL_DATABASE=my_wiki
       - MYSQL_USER=wikiuser
       - MYSQL_PASSWORD=wikipassword
@@ -55,6 +55,7 @@ services:
     ports:
       - "8081:80"
     environment:
+      - FILEBROWSER_ADMIN_USERNAME=${FILEBROWSER_ADMIN_USERNAME:-admin}
       - FILEBROWSER_ADMIN_PASSWORD=${FILEBROWSER_ADMIN_PASSWORD:-pimienta_admin_fb}
       - FILEBROWSER_INVITADO_USERNAME=${FILEBROWSER_INVITADO_USERNAME:-pimienta}
       - FILEBROWSER_INVITADO_PASSWORD=${FILEBROWSER_INVITADO_PASSWORD:-pimienta}

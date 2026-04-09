@@ -138,5 +138,11 @@ echo "Listo. Comprobación:"
 docker --version
 docker compose version
 echo ""
+if [[ -n "${SUDO_USER:-}" ]] && id -nG "$SUDO_USER" 2>/dev/null | grep -qw docker; then
+	echo "⚠  IMPORTANTE: si acabás de ser agregado al grupo docker, cerrá esta"
+	echo "   sesión y volvé a entrar (o ejecutá 'newgrp docker') antes de correr"
+	echo "   bootstrap-with-restore.sh, o docker fallará con «permission denied»."
+	echo ""
+fi
 echo "Siguiente paso: cp .env.example .env && nano .env"
 echo "Luego: ./ops/bootstrap-with-restore.sh"

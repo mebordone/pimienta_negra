@@ -17,6 +17,11 @@ gen_cert() {
   openssl req -x509 -newkey rsa:2048 -nodes \
     -keyout "$key" -out "$crt" -days 3650 \
     -subj "/CN=$cn" 2>/dev/null
+  if [[ ! -f "$crt" || ! -f "$key" ]]; then
+    echo "Error: no se pudo generar el certificado para $cn." >&2
+    echo "  Verificá que openssl esté instalado y que el directorio $CERT_DIR sea escribible." >&2
+    exit 1
+  fi
   chmod 640 "$key" 2>/dev/null || true
 }
 

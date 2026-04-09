@@ -4,6 +4,7 @@ set -eu
 CONFIG="/config/settings.json"
 DB="/database/filebrowser.db"
 
+ADMIN_USER="${FILEBROWSER_ADMIN_USERNAME:-admin}"
 ADMIN_PASS="${FILEBROWSER_ADMIN_PASSWORD:?FILEBROWSER_ADMIN_PASSWORD is required}"
 GUEST_USER="${FILEBROWSER_INVITADO_USERNAME:-pimienta}"
 INV_PASS="${FILEBROWSER_INVITADO_PASSWORD:?FILEBROWSER_INVITADO_PASSWORD is required}"
@@ -41,9 +42,9 @@ fb config set --baseURL /archivos -c "$CONFIG" -d "$DB" >/dev/null 2>&1 || true
 echo "FileBrowser: asegurando branding.files /branding..."
 fb config set --branding.files /branding -c "$CONFIG" -d "$DB" >/dev/null 2>&1 || true
 
-echo "FileBrowser: asegurando usuario admin..."
-if user_exists admin; then
-  fb users update admin \
+echo "FileBrowser: asegurando usuario admin (${ADMIN_USER})..."
+if user_exists "$ADMIN_USER"; then
+  fb users update "$ADMIN_USER" \
     -c "$CONFIG" \
     -d "$DB" \
     -p "$ADMIN_PASS" \
@@ -56,7 +57,7 @@ if user_exists admin; then
     --perm.share \
     --perm.download
 else
-  fb users add admin "$ADMIN_PASS" \
+  fb users add "$ADMIN_USER" "$ADMIN_PASS" \
     -c "$CONFIG" \
     -d "$DB" \
     --perm.admin \
@@ -97,4 +98,4 @@ else
     --perm.download
 fi
 
-echo "FileBrowser: usuarios listos (admin + ${GUEST_USER})."
+echo "FileBrowser: usuarios listos (${ADMIN_USER} + ${GUEST_USER})."

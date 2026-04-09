@@ -82,7 +82,7 @@ $wgDBtype = "mysql";
 $wgDBserver = "db";
 $wgDBname = "my_wiki";
 $wgDBuser = "root";
-$wgDBpassword = "pimienta_rosa";
+$wgDBpassword = getenv( 'MYSQL_ROOT_PASSWORD' ) ?: 'pimienta_rosa';
 
 # MySQL specific settings
 $wgDBprefix = "";
