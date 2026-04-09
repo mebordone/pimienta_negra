@@ -120,8 +120,20 @@ proyecto_pimienta/
 
 ## Inicio rápido (3 pasos)
 
-> Requiere: **Docker + Docker Compose** y **git** instalados.  
-> En Debian/Ubuntu: `sudo apt install docker.io docker-compose-plugin avahi-daemon avahi-utils git`
+> **Antes de `./ops/bootstrap-with-restore.sh`**, en el host (no dentro de Docker):
+>
+> | Qué | Para qué |
+> |-----|----------|
+> | **Git** | Clonar el repo. |
+> | **Docker Engine** + plugin **Compose v2** (`docker compose`, no el binario viejo `docker-compose`) | `docker compose up`, imágenes y volúmenes. |
+> | **OpenSSL** (`openssl` en el PATH) | `./ops/init-chat.sh` genera certificados autofirmados en `data/prosody-certs/`. |
+> | Usuario con permiso de usar Docker | Suele ser miembro del grupo `docker` o ejecutar con `sudo` (según tu instalación). |
+> | **Avahi** (`avahi-daemon`, `avahi-utils`) | Solo si vas a poner **`LAN_MDNS=1`** en `.env` para que otras PCs/celulares resuelvan `pimienta.local`. Sin eso el bootstrap igual corre en esta máquina. |
+> | **sudo** | Solo si usás `LAN_MDNS=1`: el script instala el servicio systemd `pimienta-mdns`. |
+>
+> En Debian/Ubuntu, línea típica (Avahi incluido por si activás mDNS):  
+> `sudo apt install git docker.io docker-compose-plugin openssl avahi-daemon avahi-utils`  
+> Luego habilitá Docker (`sudo systemctl enable --now docker`) y, si aplica, `sudo usermod -aG docker "$USER"` y nueva sesión.
 
 ```bash
 # 1. Clonar
