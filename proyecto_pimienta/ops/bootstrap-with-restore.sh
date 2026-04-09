@@ -40,6 +40,12 @@ fi
 echo "=== [1/5] Certificados Prosody (init-chat) ==="
 ./ops/init-chat.sh
 
+# ── 1b. Bind mounts FileBrowser: crear dirs y asignar UID 1000 antes de montar ─
+echo ""
+echo "=== [1b] Preparando directorios de bind mounts (FileBrowser UID 1000) ==="
+mkdir -p data/filebrowser archivos
+sudo chown -R 1000:1000 data/filebrowser archivos
+
 # ── 2. Levantar stack ────────────────────────────────────────────────────────
 echo ""
 echo "=== [2/5] docker compose up -d ==="
