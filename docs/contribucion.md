@@ -29,6 +29,7 @@ pimienta_negra/
 | Script | Uso |
 |--------|-----|
 | `bootstrap-with-restore.sh` | Primer arranque: certificados, compose, restore wiki, opcional mDNS. |
+| `instalar_dependencias.sh` | Primera vez en el host: `apt` + Docker/Compose v2 + Avahi (ejecutar con `sudo`; Debian/Ubuntu/Mint). |
 | `init-chat.sh` | Genera certificados en `data/prosody-certs/`. |
 | `restore-wiki.sh` / `backup-wiki.sh` | Restaurar / empaquetar wiki. |
 | `verify-stack.sh` | Smoke test HTTP del gateway. |

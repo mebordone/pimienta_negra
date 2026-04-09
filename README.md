@@ -99,6 +99,7 @@ proyecto_pimienta/
 │   ├── backup-wiki.sh            # Genera backup .tar.gz de la wiki
 │   ├── restore-wiki.sh           # Restaura wiki desde .tar.gz o .sql
 │   ├── bootstrap-with-restore.sh # init-chat + compose up + restore-wiki (primer arranque con contenido)
+│   ├── instalar_dependencias.sh  # Primera vez en el host: apt + Docker/Compose v2 + Avahi (ejecutar con sudo)
 │   ├── verify-stack.sh           # Comprueba landing, /wiki/, /chat, /archivos vía gateway (curl + --resolve)
 │   ├── up-gateway-port80.sh      # Tras liberar :80 en el host, levanta gateway y ejecuta verify-stack
 │   ├── vendor-converse.sh        # Descarga Converse 12 + libsignal a config/converse/vendor/ (requiere red)
@@ -118,33 +119,32 @@ proyecto_pimienta/
 └── data/                         # Runtime (ignorado por git): DBs, prosody, certs, filebrowser, imágenes
 ```
 
-## Inicio rápido (3 pasos)
+## Inicio rápido (4 pasos)
 
-> **Antes de `./ops/bootstrap-with-restore.sh`**, en el host (no dentro de Docker):
+> **Antes del bootstrap**, en el host (no dentro de Docker) necesitás **git**, **OpenSSL**, **Docker** con **`docker compose` v2** y, si vas a usar **`LAN_MDNS=1`**, **Avahi**. Lo más simple es el script (Debian / Ubuntu / Linux Mint con **apt**):
 >
-> | Qué | Para qué |
-> |-----|----------|
-> | **Git** | Clonar el repo. |
-> | **Docker Engine** + plugin **Compose v2** (`docker compose`, no el binario viejo `docker-compose`) | `docker compose up`, imágenes y volúmenes. |
-> | **OpenSSL** (`openssl` en el PATH) | `./ops/init-chat.sh` genera certificados autofirmados en `data/prosody-certs/`. |
-> | Usuario con permiso de usar Docker | Suele ser miembro del grupo `docker` o ejecutar con `sudo` (según tu instalación). |
-> | **Avahi** (`avahi-daemon`, `avahi-utils`) | Solo si vas a poner **`LAN_MDNS=1`** en `.env` para que otras PCs/celulares resuelvan `pimienta.local`. Sin eso el bootstrap igual corre en esta máquina. |
-> | **sudo** | Solo si usás `LAN_MDNS=1`: el script instala el servicio systemd `pimienta-mdns`. |
+> ```bash
+> cd pimienta_negra/proyecto_pimienta   # después de clonar
+> sudo ./ops/instalar_dependencias.sh  # opción: --no-avahi si no usarás mDNS
+> ```
 >
-> En Debian/Ubuntu, línea típica (Avahi incluido por si activás mDNS):  
-> `sudo apt install git docker.io docker-compose-plugin openssl avahi-daemon avahi-utils`  
-> Luego habilitá Docker (`sudo systemctl enable --now docker`) y, si aplica, `sudo usermod -aG docker "$USER"` y nueva sesión.
+> El script hace `apt update`, instala lo anterior y, si hace falta (típico en Mint sin `docker-compose-plugin` en los repos), configura el **repositorio oficial de Docker** usando `UBUNTU_CODENAME` o `DEBIAN_CODENAME` de `/etc/os-release`. Te agrega al grupo `docker` si corrés con `sudo`; **cerrá sesión y volvé a entrar** para usar `docker` sin sudo. Si Docker y Compose ya estaban bien, no los toca.
+>
+> **A mano:** `git`, `openssl`, `avahi-daemon`, `avahi-utils`; Docker según [Ubuntu](https://docs.docker.com/engine/install/ubuntu/) o [Debian](https://docs.docker.com/engine/install/debian/) (en Mint usá el codename de `UBUNTU_CODENAME` en el `sources.list` de Docker). Comprobá con `docker compose version`.
 
 ```bash
 # 1. Clonar
 git clone https://github.com/mebordone/pimienta_negra
 cd pimienta_negra/proyecto_pimienta
 
-# 2. Configurar contraseñas y acceso LAN
+# 2. Dependencias del sistema (solo la primera vez; requiere sudo)
+sudo ./ops/instalar_dependencias.sh
+
+# 3. Configurar contraseñas y acceso LAN
 cp .env.example .env
 nano .env          # Editá FILEBROWSER_*_PASSWORD y descomentá LAN_MDNS=1
 
-# 3. Primer arranque (hace todo: certificados, Docker, wiki, mDNS LAN)
+# 4. Primer arranque (hace todo: certificados, Docker, wiki, mDNS LAN)
 ./ops/bootstrap-with-restore.sh
 ```
 
@@ -160,7 +160,7 @@ Con **`LAN_MDNS=1`** en `.env`, el paso 3 instala automáticamente un servicio *
 docker --version && docker compose version
 ```
 
-En Debian/Ubuntu: `sudo apt install docker.io docker-compose-plugin`
+Resumen: hace falta **Docker** y el subcomando **`docker compose`** (v2). Si `apt install docker-compose-plugin` falla, usá el repositorio oficial de Docker (Ubuntu/Debian) como en la tabla de **Inicio rápido** arriba; no alcanza con `docker.io` solo en muchas PCs con Mint.
 
 ### Acceso desde otros dispositivos (LAN_MDNS)
 

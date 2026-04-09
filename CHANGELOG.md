@@ -4,6 +4,11 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/). L
 
 ---
 
+### 2026-03-30
+
+- feat(ops): `instalar_dependencias.sh` — apt + Docker/Compose v2 + Avahi; repo Docker oficial si falta `docker-compose-plugin` (p. ej. Linux Mint)
+- docs: README inicio rápido en 4 pasos, árbol del repo y `docs/contribucion.md` con el script
+
 ### 2026-03-28
 
 - docs(roadmap): §5.10 dominio `.local` configurable desde `.env` (rebrand tipo `flisol.local`); §5.9 y §0.2
