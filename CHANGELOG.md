@@ -6,6 +6,18 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/). L
 
 ### 2026-04-09
 
+- feat(ops): `bootstrap-filebrowser-users.sh` — locale `es` por defecto en FileBrowser
+- fix(ops): robustez arranque en frío — variables, certs y skip graceful:
+  - `docker-compose.yml`: `MYSQL_ROOT_PASSWORD` y `FILEBROWSER_ADMIN_USERNAME` leen desde `.env`
+  - `LocalSettings.php`: `$wgDBpassword` lee `MYSQL_ROOT_PASSWORD` del entorno del contenedor (ya no hardcodeada)
+  - `bootstrap-filebrowser-users.sh`: username admin configurable via `FILEBROWSER_ADMIN_USERNAME`
+  - `restore-wiki.sh`: sin dump SQL → aviso + `exit 0` (wiki vacía funcional) en lugar de `exit 1`
+  - `init-chat.sh`: verifica existencia de `.crt`/`.key` tras `openssl`; falla con mensaje claro si faltan
+  - `instalar_dependencias.sh`: aviso explícito de reabrir sesión después de agregar al grupo `docker`
+  - `.env.example`: documenta `MYSQL_ROOT_PASS` y `FILEBROWSER_ADMIN_USERNAME`
+- fix(ops): `restore-wiki.sh` — forzar TCP (`-h 127.0.0.1`) en llamadas `mysql` dentro del contenedor `db` (evita error de socket Unix en arranque en frío)
+- feat(ops): `reset.sh` — limpia contenedores, volúmenes Docker y bind mounts para ciclo de desarrollo (`--purge` borra también imágenes)
+- fix(ops): `bootstrap-with-restore.sh` — `mkdir -p` + `chown 1000:1000` sobre `data/filebrowser` y `archivos` antes de `docker compose up` (FileBrowser UID 1000 no puede escribir en dirs creados como root)
 - fix(ops): `bootstrap-with-restore.sh` — `restore-wiki` tras MariaDB y **antes** del check HTTP (arranque en frío con BD vacía)
 - docs: operación y contribución — orden bootstrap / wiki 500 hasta importar SQL
 

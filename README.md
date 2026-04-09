@@ -107,7 +107,8 @@ proyecto_pimienta/
 │   ├── setup-lan-mdns.sh         # mDNS (Avahi) para que la LAN resuelva pimienta*.local
 │   ├── diagnose-lan-access.sh    # Si no entra desde celular/otra PC: IP, puerto, firewall
 │   ├── bootstrap-filebrowser-users.sh
-│   └── filebrowser-entrypoint.sh
+│   ├── filebrowser-entrypoint.sh
+│   └── reset.sh                  # Desarrollo: baja stack, borra datos y bind mounts para arrancar de cero
 ├── tests/
 │   ├── README.md                 # Suite estática + integración HTTP
 │   ├── run-all.sh                # Orquestador (--static-only / --integration-only)
@@ -174,16 +175,18 @@ Copiá [proyecto_pimienta/.env.example](proyecto_pimienta/.env.example) a `proye
 
 | Variable | Default | Descripción |
 |----------|---------|-------------|
+| `MYSQL_ROOT_PASS` | `pimienta_rosa` | Contraseña del usuario root de MariaDB. Debe coincidir en todos los servicios; si la cambiás hacé `./ops/reset.sh` antes de volver a levantar. |
 | `GATEWAY_HTTP_PORT` | `80` | Puerto nginx en el host. Si el 80 está ocupado usá otro (ej `8088`) y, si fijás `MW_SERVER`, el mismo puerto ahí. |
 | `GATEWAY_HTTPS_PORT` | `443` | Puerto TLS del gateway: solo responde con **301 a HTTP** (cert. autofirmado de `data/prosody-certs/`). Si el 443 del host está ocupado, cambiá ambos. |
 | `MW_SERVER` | *(vacío)* | Si está vacío, la wiki usa el mismo host que escribís en el navegador (evita redirigir a `pimienta.local` cuando un celular no resuelve `.local`). Para forzar siempre el nombre: `http://pimienta.local` o con puerto `http://pimienta.local:8088`. |
+| `FILEBROWSER_ADMIN_USERNAME` | `admin` | Usuario administrador de FileBrowser. |
 | `FILEBROWSER_ADMIN_PASSWORD` | valor de prueba | Mínimo 8 caracteres. |
 | `FILEBROWSER_INVITADO_USERNAME` | `pimienta` | Usuario de acceso limitado en FileBrowser. |
 | `FILEBROWSER_INVITADO_PASSWORD` | `pimienta` | Mínimo 8 caracteres (mismo valor por defecto que el usuario). |
 | `PROSODY_ADMIN_PASSWORD` | valor de prueba | Cuenta `admin@accounts.pimienta.local`. |
 | `LAN_MDNS` | `0` | Poné `1` para instalar servicio Avahi persistente al final del bootstrap. |
 
-**Permisos FileBrowser:** corre como UID 1000; si fallan escrituras en `archivos/` o `data/filebrowser/` ejecutá `sudo chown -R 1000:1000 archivos data/filebrowser` (desde `proyecto_pimienta/`).
+**Permisos FileBrowser:** el bootstrap crea y ajusta los permisos de `data/filebrowser/` y `archivos/` automáticamente. No hace falta `chown` manual en el primer arranque.
 
 **Chat sin Internet:** los assets de Converse ya están en el repo (`config/converse/vendor/`). Si necesitás actualizar a otra versión: `./ops/vendor-converse.sh` (requiere red solo esa vez).
 
@@ -200,6 +203,18 @@ Copiá [proyecto_pimienta/.env.example](proyecto_pimienta/.env.example) a `proye
 | **Instalación / actualización** | Sí, salvo mirror offline | `docker pull` y regenerar `vendor/` necesitan red (o imágenes `.tar` / repo con `vendor/` ya incluido). |
 
 Para comprobar: apagá Internet, recargá `/`, `/wiki/`, `/chat/`, `/archivos/` y revisá la pestaña *Red* del navegador; no debería haber solicitudes fallidas a CDNs salvo el caso de fuentes del skin.
+
+### Reset completo (ciclo de desarrollo)
+
+Para limpiar todo el estado y arrancar de cero (útil al desarrollar o cuando el stack quedó inconsistente):
+
+```bash
+cd proyecto_pimienta
+./ops/reset.sh                    # baja contenedores, volúmenes Docker, data/ y archivos/
+./ops/bootstrap-with-restore.sh   # levanta desde cero
+```
+
+`reset.sh --purge` borra también las imágenes Docker cacheadas. Preserva siempre `.env`, `config/` y `backups/`.
 
 ### Inicio limpio (wiki vacía)
 
