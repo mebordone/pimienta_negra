@@ -4,9 +4,10 @@
 #   1. Carga .env
 #   2. Genera certificados Prosody y ajusta permisos (init-chat)
 #   3. Levanta el stack (docker compose up -d)
-#   4. Espera base de datos y wiki
-#   5. Restaura el contenido de la wiki
-#   6. (Si LAN_MDNS=1 en .env) Instala/reinicia servicio systemd pimienta-mdns para que
+#   4. Espera MariaDB
+#   5. Restaura la wiki (import SQL; con BD vacía MediaWiki responde 500 hasta este paso)
+#   6. Espera HTTP 200 en el contenedor wiki (tras restore)
+#   7. (Si LAN_MDNS=1 en .env) Instala/reinicia servicio systemd pimienta-mdns para que
 #      pimienta*.local resuelva en la Wi‑Fi (mDNS); el runner re-detecta la IP periódicamente.
 #
 # Uso:
@@ -58,23 +59,23 @@ for i in $(seq 1 90); do
   printf "."; sleep 1
 done
 
+# ── 4. Restaurar wiki (antes del check HTTP: BD vacía → 500 en /) ────────────
 echo ""
-echo "=== Esperando wiki (HTTP interno) ==="
+echo "=== [4/5] restore-wiki ==="
+./ops/restore-wiki.sh "$@"
+
+echo ""
+echo "=== Esperando wiki (HTTP interno, tras restore) ==="
 for i in $(seq 1 60); do
   if docker compose exec -T wiki sh -c 'curl -sf http://127.0.0.1/ >/dev/null 2>&1'; then
     echo "Wiki lista."
     break
   fi
   if [[ "$i" -eq 60 ]]; then
-    echo "Timeout esperando el contenedor wiki." >&2; exit 1
+    echo "Timeout esperando el contenedor wiki tras restore." >&2; exit 1
   fi
   printf "."; sleep 2
 done
-
-# ── 4. Restaurar wiki ────────────────────────────────────────────────────────
-echo ""
-echo "=== [4/5] restore-wiki ==="
-./ops/restore-wiki.sh "$@"
 
 # ── 5. Acceso LAN (Avahi) ────────────────────────────────────────────────────
 echo ""
