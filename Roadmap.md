@@ -31,7 +31,7 @@ Con el stack **ya operativo**, el esfuerzo incremental más valioso suele ser:
 
 | Orden | Bloque | Por qué |
 |-------|--------|--------|
-| 1 | **§5 Mejoras de UX** (URLs cortas wiki, redirecciones desde enlaces viejos en raíz, MUC persistente, pulido Converse) | Chat HTTPS, favicon, landing en `/` y wiki en `/wiki/` ya entregados; sigue valor en short URLs y UX residual. |
+| 1 | **§5 Mejoras de UX** (URLs cortas wiki, redirecciones desde enlaces viejos en raíz, MUC persistente, pulido Converse, **§5.10 dominio `.local` configurable**) | Chat HTTPS, favicon, landing en `/` y wiki en `/wiki/` ya entregados; sigue valor en short URLs, UX residual y rebrand sin tocar muchos archivos (eventos, FLISoL, etc.). |
 | 2 | **§10 Documentación para personas no técnicas** + pegatinas/QR en el nodo | Reduce soporte y errores de URL/puerto. |
 | 3 | **§4.3 Backups automáticos** (cron + retención) | Protege la wiki sin depender de que alguien acuerde ejecutar el script. |
 | 4 | **§6 Panel de administración web** (mínimo: estado de contenedores, espacio en disco, “backup ahora”) | Menos terminal para cuidadoras del nodo. |
@@ -289,6 +289,29 @@ Los detalles de cada bloque siguen en las secciones numeradas más abajo. Para *
 | **Código QR** impreso o en la wiki con la URL del nodo | Cero tipeo desde el celular; ideal para talleres y pegatinas. |
 | **PWA mínima** (`manifest.json` + service worker básico en `/chat/`) | "Instalar" el chat como app en el celular; mejor UX y evita redirecciones HTTPS del navegador. |
 | **Healthcheck / status page** (`/status` en nginx) | Para la cuidadora del nodo, sin terminal: muestra si wiki/chat/archivos responden. |
+| **Dominio `.local` configurable** (un solo lugar en `.env`) | Rebrand tipo `pimienta.local` → `flisol.local` sin buscar/reemplazar en docenas de archivos; ver **§5.10**. |
+
+### 5.10. Dominio del nodo configurable (rebrand `*.local`) — *pendiente*
+
+- **Problema**: el nombre **`pimienta.local`** y los dominios XMPP asociados (**`accounts.pimienta.local`**, **`conference.pimienta.local`**) están **hardcodeados** en varios componentes: Prosody (`prosody.cfg.lua`), nginx (`default.conf`, `Host` hacia Prosody), Converse (`config/converse/index.html`), generación de certificados (`ops/init-chat.sh`), registro del admin (`ops/prosody-entrypoint.sh`), mDNS (`ops/setup-lan-mdns.sh`), fallback de MediaWiki (`LocalSettings.php`), scripts de verificación y mensajes de `bootstrap-with-restore.sh` / `diagnose-lan-access.sh`. Cambiar a otro nombre (p. ej. **`flisol.local`**) exige tocar muchos archivos a la vez y regenerar certs; es fácil dejar algo desalineado.
+- **Objetivo**: definir **un origen de verdad** (p. ej. `NODE_DOMAIN=flisol.local` o `PIMIENTA_LOCAL_DOMAIN` en `.env`) y derivar automáticamente:
+  - `accounts.<dominio>` y `conference.<dominio>` para XMPP;
+  - nombres de archivos de certificado en `data/prosody-certs/` coherente con nginx y Prosody;
+  - lista de nombres publicados por Avahi / `pimienta-mdns` (o renombrar el servicio si el dominio deja de ser “pimienta”).
+- **Alcance técnico sugerido**:
+  - Variables en [`.env.example`](proyecto_pimienta/.env.example) + documentación en [docs/operacion-y-troubleshooting.md](docs/operacion-y-troubleshooting.md).
+  - Plantillas o sustitución en **primer arranque** (`init-chat`, entrypoints) en lugar de editar a mano tres virtual hosts en Lua.
+  - **Converse**: inyectar `jid` / `muc_domain` / salas desde el mismo dominio (build estático mínimo, o sustitución al copiar al volumen del gateway).
+  - **Tests**: `PIMIENTA_HOST` (u homónimo alineado al `.env`) como default en [`tests/lib/common.sh`](proyecto_pimienta/tests/lib/common.sh) y `verify-stack.sh` para que CI refleje el dominio elegido.
+- **Migración / datos existentes** (documentar en la entrega):
+  - Regenerar certificados y alinear Prosody; en muchos casos conviene **volumen limpio** de `data/prosody/` o procedimiento explícito (cuentas y MUC quedan ligadas al dominio anterior).
+  - Enlaces en contenido wiki a `pimienta.local` no se actualizan solos (búsqueda en wiki o en el dump).
+  - Si el servicio systemd sigue llamándose `pimienta-mdns`, evaluar renombrar o dejar nombre genérico (`nodo-mdns`) para no confundir cuando el dominio ya no es “pimienta”.
+- **Tareas**:
+  - Diseñar nombres de variables y convención (`NODE_DOMAIN` vs tres variables explícitas).
+  - Implementar generación de certs y ajuste de configs consumidos por Docker (sin romper despliegues que ya tienen `data/` poblado).
+  - Actualizar README, decisiones de diseño y checklist §0.1 con el flujo “elegir dominio antes del primer `bootstrap`”.
+  - Añadir prueba mínima (integración o estático) que valide que `docker compose config` y un dominio de ejemplo no dejan referencias rotas.
 
 ---
 

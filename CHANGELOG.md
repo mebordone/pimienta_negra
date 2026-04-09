@@ -6,6 +6,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/). L
 
 ### 2026-03-28
 
+- docs(roadmap): §5.10 dominio `.local` configurable desde `.env` (rebrand tipo `flisol.local`); §5.9 y §0.2
 - feat(landing): credenciales invitado bajo Archivos (`guest_username` / `guest_password` en `config.json`) y modal nativo antes de abrir el chat (certificado HTTPS local)
 - docs: README, arquitectura, operación, decisiones, contribución, índice `docs/README`, Roadmap §5 y `proyecto_pimienta/tests/README` alineados a la UX de la landing
 - fix(ops): `diagnose-lan-access.sh` — pista de Android con «tu red» en lugar de un SSID de ejemplo
