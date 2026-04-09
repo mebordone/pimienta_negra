@@ -120,7 +120,7 @@ tmp_pre="$(mktemp -t pimienta_wiki_pre.XXXXXX.sql)"
 trap 'rm -f "$tmp_sql" "$tmp_pre"; [[ -n "${tmp_dir:-}" ]] && rm -rf "$tmp_dir"' EXIT
 
 echo "Reiniciando base de datos my_wiki..."
-docker compose exec -T db mysql -u"${mysql_root_user}" -p"${mysql_root_pass}" \
+docker compose exec -T db mysql -h 127.0.0.1 -u"${mysql_root_user}" -p"${mysql_root_pass}" \
   -e "DROP DATABASE IF EXISTS my_wiki; CREATE DATABASE my_wiki DEFAULT CHARACTER SET utf8mb4 DEFAULT COLLATE utf8mb4_unicode_ci;"
 
 echo "Preprocesando collation UCA (si existe) y filtrando bloque my_wiki..."
@@ -152,14 +152,14 @@ if [[ ! -s "$tmp_sql" ]]; then
   cp "$tmp_pre" "$tmp_sql"
 fi
 
-cat "$tmp_sql" | docker compose exec -T db mysql -u"${mysql_root_user}" -p"${mysql_root_pass}" my_wiki
+cat "$tmp_sql" | docker compose exec -T db mysql -h 127.0.0.1 -u"${mysql_root_user}" -p"${mysql_root_pass}" my_wiki
 
 echo "Restauracion completada. Reiniciando wiki..."
 docker compose up -d wiki >/dev/null
 
 echo "Verificando contenido restaurado..."
 pages_count="$(
-  docker compose exec -T db mysql -u"${mysql_root_user}" -p"${mysql_root_pass}" -N -B \
+  docker compose exec -T db mysql -h 127.0.0.1 -u"${mysql_root_user}" -p"${mysql_root_pass}" -N -B \
     -e "USE my_wiki; SELECT COUNT(*) FROM page;"
 )"
 
