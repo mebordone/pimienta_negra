@@ -42,6 +42,10 @@ fb config set --baseURL /archivos -c "$CONFIG" -d "$DB" >/dev/null 2>&1 || true
 echo "FileBrowser: asegurando branding.files /branding..."
 fb config set --branding.files /branding -c "$CONFIG" -d "$DB" >/dev/null 2>&1 || true
 
+# Idioma por defecto de la interfaz.
+echo "FileBrowser: asegurando locale es..."
+fb config set --locale es -c "$CONFIG" -d "$DB" >/dev/null 2>&1 || true
+
 echo "FileBrowser: asegurando usuario admin (${ADMIN_USER})..."
 if user_exists "$ADMIN_USER"; then
   fb users update "$ADMIN_USER" \
