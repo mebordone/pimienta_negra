@@ -12,7 +12,7 @@ if [[ -f .env ]]; then
 fi
 
 PORT="${GATEWAY_HTTP_PORT:-80}"
-HOST="pimienta.local"
+HOST="${PIMIENTA_HOST:-${NODE_DOMAIN:-pimienta.local}}"
 RESOLVE="${HOST}:${PORT}:127.0.0.1"
 MAX_SEC="${PIMIENTA_WAIT_MAX_SEC:-180}"
 INTERVAL="${PIMIENTA_WAIT_INTERVAL:-3}"

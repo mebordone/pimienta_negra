@@ -22,10 +22,24 @@ jobs:
         working-directory: proyecto_pimienta
         run: ./tests/static/shellcheck.sh
 
+  unit:
+    runs-on: ubuntu-latest
+    needs: static
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Unit tests
+        working-directory: proyecto_pimienta
+        run: ./tests/run-all.sh --unit-only
+
   e2e:
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: static
+    needs: [static, unit]
+    strategy:
+      fail-fast: false
+      matrix:
+        node_domain: [pimienta.local, flisol.local]
     steps:
       - uses: actions/checkout@v4
 
@@ -36,6 +50,8 @@ jobs:
           {
             echo "GATEWAY_HTTP_PORT=8080"
             echo "GATEWAY_HTTPS_PORT=8443"
+            echo "NODE_DOMAIN=${{ matrix.node_domain }}"
+            echo "MW_SERVER=http://${{ matrix.node_domain }}:8080"
           } >> .env
           ./ops/init-chat.sh
 
@@ -52,3 +68,19 @@ jobs:
       - name: Integration tests
         working-directory: proyecto_pimienta
         run: ./tests/run-all.sh --integration-only
+
+      - name: Collect diagnostics on failure
+        if: failure()
+        working-directory: proyecto_pimienta
+        run: |
+          mkdir -p test-artifacts
+          docker compose ps -a > test-artifacts/compose-ps.txt || true
+          docker compose logs --no-color > test-artifacts/compose-logs.txt || true
+          ./ops/verify-stack.sh > test-artifacts/verify-stack.txt 2>&1 || true
+
+      - name: Upload diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-diagnostics-${{ matrix.node_domain }}
+          path: proyecto_pimienta/test-artifacts

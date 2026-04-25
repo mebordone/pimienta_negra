@@ -1,6 +1,6 @@
 # Tests del stack Pimienta
 
-Suite ligera para comprobar que el gateway y rutas críticas siguen respondiendo tras cambios en nginx, Compose o scripts.
+Suite para comprobar consistencia estática, unitarios de scripts base y rutas críticas vía integración.
 
 ## Requisitos
 
@@ -13,11 +13,14 @@ Suite ligera para comprobar que el gateway y rutas críticas siguen respondiendo
 Desde `proyecto_pimienta/`:
 
 ```bash
-# Todo (estáticos + integración)
+# Todo (estáticos + unitarios + integración)
 ./tests/run-all.sh
 
 # Solo validación de compose / shellcheck (sin stack arriba)
 ./tests/run-all.sh --static-only
+
+# Solo unitarios de scripts (sin stack arriba)
+./tests/run-all.sh --unit-only
 
 # Solo HTTP (asume stack arriba; incluye ./ops/verify-stack.sh)
 ./tests/run-all.sh --integration-only
@@ -41,6 +44,7 @@ Lee `GATEWAY_HTTP_PORT` del `.env` igual que `verify-stack.sh`. El script espera
 |-------|-------------|
 | `static/compose-config.sh` | `docker compose config` |
 | `static/shellcheck.sh` | `shellcheck` sobre `tests/**/*.sh` (si no hay binario, hace skip) |
+| `unit/10-domain-env.sh` | Validaciones de `NODE_DOMAIN`, derivados y guardrail de cambio en caliente. |
 | `integration/10-verify-stack.sh` | Delega en [`ops/verify-stack.sh`](../ops/verify-stack.sh) |
 | `integration/20-favicon.sh` | `HEAD`/`GET` `/favicon.ico` y `/favicon.png` |
 | `integration/30-filebrowser-icons.sh` | `HEAD`/`GET` `/archivos/static/img/icons/favicon.svg` |
@@ -48,7 +52,7 @@ Lee `GATEWAY_HTTP_PORT` del `.env` igual que `verify-stack.sh`. El script espera
 
 ## Qué no cubre
 
-- Resolución **mDNS** real en la LAN (Avahi / `pimienta.local` desde otros equipos).
+- Resolución **mDNS** real en la LAN (Avahi / `NODE_DOMAIN` desde otros equipos).
 - Navegadores móviles ni aceptación manual del certificado HTTPS del chat.
 - Contenido concreto de la wiki más allá de que `/wiki/` devuelva 200 y patrones del smoke existente.
 - Enlaces antiguos a la wiki en la raíz (`/index.php?…`): no hay redirección automática; la wiki vive en `/wiki/` (ver `config/landing/README.md`).

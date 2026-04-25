@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Comprueba que el gateway responde como Pimienta (wiki / chat / archivos).
-# Usa pimienta.local + --resolve hacia 127.0.0.1 (no depende de /etc/hosts).
+# Usa NODE_DOMAIN/PIMIENTA_HOST + --resolve hacia 127.0.0.1 (no depende de /etc/hosts).
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -14,7 +14,7 @@ fi
 
 PORT="${GATEWAY_HTTP_PORT:-80}"
 HTTPS_PORT="${GATEWAY_HTTPS_PORT:-443}"
-HOST="pimienta.local"
+HOST="${PIMIENTA_HOST:-${NODE_DOMAIN:-pimienta.local}}"
 RESOLVE="${HOST}:${PORT}:127.0.0.1"
 RESOLVE_HTTPS="${HOST}:${HTTPS_PORT}:127.0.0.1"
 BODY="$(mktemp -t pimienta_verify.XXXXXX)"
@@ -31,7 +31,7 @@ warn_nginx_host() {
   echo "sirviendo el gateway de Docker. Comprobá quién escucha el puerto:" >&2
   echo "  ss -tlnp | grep ':${PORT} '" >&2
   echo "Si el 80 lo usa nginx del host, detenelo (p. ej. sudo systemctl stop nginx) o usá otro" >&2
-  echo "puerto en .env: GATEWAY_HTTP_PORT=8088 y MW_SERVER=http://pimienta.local:8088" >&2
+  echo "puerto en .env: GATEWAY_HTTP_PORT=8088 y MW_SERVER=http://${HOST}:8088" >&2
 }
 
 echo "=== docker compose ps ==="

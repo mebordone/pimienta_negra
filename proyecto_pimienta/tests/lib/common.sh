@@ -15,7 +15,7 @@ pimienta_tests_init() {
 		set +a
 	fi
 
-	export PIMIENTA_HOST="${PIMIENTA_HOST:-pimienta.local}"
+	export PIMIENTA_HOST="${PIMIENTA_HOST:-${NODE_DOMAIN:-pimienta.local}}"
 	export PIMIENTA_PORT="${GATEWAY_HTTP_PORT:-80}"
 	export PIMIENTA_HTTPS_PORT="${GATEWAY_HTTPS_PORT:-443}"
 	export PIMIENTA_RESOLVE="${PIMIENTA_HOST}:${PIMIENTA_PORT}:127.0.0.1"

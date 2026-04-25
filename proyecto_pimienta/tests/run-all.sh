@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Orquestador de tests: estáticos (compose, shellcheck) e integración HTTP.
+# Orquestador de tests: estáticos (compose, shellcheck), unitarios e integración HTTP.
 # Ejecutar desde cualquier cwd; usa proyecto_pimienta como raíz del stack.
 set -euo pipefail
 
@@ -10,10 +10,11 @@ MODE="both"
 for arg in "$@"; do
 	case "$arg" in
 	--static-only) MODE="static" ;;
+	--unit-only) MODE="unit" ;;
 	--integration-only) MODE="integration" ;;
 	-h | --help)
-		echo "Uso: $0 [--static-only | --integration-only]"
-		echo "  Por defecto: estáticos + integración (requiere Docker arriba para integración)."
+		echo "Uso: $0 [--static-only | --unit-only | --integration-only]"
+		echo "  Por defecto: estáticos + unitarios + integración (requiere Docker arriba para integración)."
 		exit 0
 		;;
 	esac
@@ -34,6 +35,10 @@ run_dir() {
 
 if [[ "$MODE" == "static" || "$MODE" == "both" ]]; then
 	run_dir "static" "$ROOT/tests/static"
+fi
+
+if [[ "$MODE" == "unit" || "$MODE" == "both" ]]; then
+	run_dir "unit" "$ROOT/tests/unit"
 fi
 
 if [[ "$MODE" == "integration" || "$MODE" == "both" ]]; then
