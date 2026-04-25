@@ -66,6 +66,14 @@ sudo rm -rf \
   archivos
 
 echo ""
+echo "--- Recreando directorios con permisos del usuario actual ---"
+TARGET_USER="${SUDO_USER:-$USER}"
+TARGET_GROUP="$(id -gn "$TARGET_USER")"
+sudo mkdir -p data archivos
+sudo chown -R "${TARGET_USER}:${TARGET_GROUP}" data archivos
+chmod u+rwx data archivos
+
+echo ""
 echo "═══════════════════════════════════════════════════════"
 echo " Reset completo. Para levantar de nuevo:"
 echo "   ./ops/bootstrap-with-restore.sh"
