@@ -12,6 +12,8 @@ Para una pasada más amplia (compose, shellcheck en `tests/`, favicon e iconos F
 
 Comprueba HTTP vía gateway (landing en `/`, wiki en `/wiki/`, `/archivos/`); **`/chat/` en HTTP** redirige a **HTTPS** y el script valida el **200** en `https://…/chat/`. No valida WebSocket en profundidad.
 
+`NODE_DOMAIN` se define en `.env` (default `pimienta.local`) antes del primer bootstrap.
+
 ## Landing (`/`): credenciales de archivos y acceso al chat
 
 - Bajo el botón **Archivos** la portada muestra el texto de acceso invitado a FileBrowser (por defecto **usuario y contraseña `pimienta`**). Los valores salen de [`config/landing/config.json`](../proyecto_pimienta/config/landing/config.json) si definís `guest_username` y `guest_password`; si no, coinciden con los defaults de `FILEBROWSER_INVITADO_*` en compose. Tras cambiar `.env`, recreá **filebrowser** y, si querés que la landing muestre otros textos sin tocar el HTML, ajustá esas claves en `config.json`.
@@ -19,7 +21,7 @@ Comprueba HTTP vía gateway (landing en `/`, wiki en `/wiki/`, `/archivos/`); **
 
 ## Favicon (wiki, chat, archivos)
 
-El gateway sirve **`/favicon.ico`** y **`/favicon.png`** en **puerto 80 y 443** desde el volumen montado [`config/nginx/favicon.png`](../proyecto_pimienta/config/nginx/favicon.png) (PNG; el navegador lo pide al mismo host que la landing, la wiki o `/archivos/`). Tras recrear el contenedor `gateway`, comprobar con `curl -sI http://pimienta.local/favicon.ico` (o tu host/puerto). Para regenerar el icono desde el logo burbuja: `convert config/mediawiki/images/wiki_burbuja_135x135.png -resize 48x48 -strip config/nginx/favicon.png` (desde `proyecto_pimienta/`).
+El gateway sirve **`/favicon.ico`** y **`/favicon.png`** en **puerto 80 y 443** desde el volumen montado [`config/nginx/favicon.png`](../proyecto_pimienta/config/nginx/favicon.png) (PNG; el navegador lo pide al mismo host que la landing, la wiki o `/archivos/`). Tras recrear el contenedor `gateway`, comprobar con `curl -sI http://<NODE_DOMAIN>/favicon.ico` (o tu host/puerto). Para regenerar el icono desde el logo burbuja: `convert config/mediawiki/images/wiki_burbuja_135x135.png -resize 48x48 -strip config/nginx/favicon.png` (desde `proyecto_pimienta/`).
 
 **FileBrowser** no usa `/favicon.ico`: su HTML apunta a **`/archivos/static/img/icons/…`**. El repo incluye branding en [`config/filebrowser/branding/`](../proyecto_pimienta/config/filebrowser/branding) (`branding.files=/branding` vía bootstrap). El **gateway nginx** intercepta `^~ /archivos/static/img/icons/` y sirve esos archivos desde disco: el binario de FileBrowser solo acepta **GET** en `/static/` (muchas peticiones **HEAD** devolvían 404) y su CSP puede interferir con SVG servidos por el upstream. **`favicon.svg` debe llevar el PNG en base64 embebido** (no `href="/favicon.png"`): Chromium y otros ignoran recursos externos dentro de un favicon SVG. Tras cambiar `config/nginx/favicon.png`, regenerá `favicon.svg` (y el resto de iconos si querés) bajo `config/filebrowser/branding/img/icons/` y recreá **gateway** (y **filebrowser** si tocás la DB/branding).
 
@@ -27,14 +29,14 @@ El gateway sirve **`/favicon.ico`** y **`/favicon.png`** en **puerto 80 y 443** 
 
 1. **En el nodo**, desde `proyecto_pimienta/`: **`./ops/diagnose-lan-access.sh`** — muestra IP LAN, si Docker escucha el puerto, HTTP local, firewall y pistas para el celular.
 2. **Proba primero por IP**, no por nombre: en el celular abrí **`http://192.168.x.x/`** (la IP que imprime el diagnóstico; si usás otro puerto, **`http://IP:8088/`** según `GATEWAY_HTTP_PORT`).
-   - Si **por IP entra** y **`pimienta.local` no** → mDNS o “DNS privado” en Android.
+   - Si **por IP entra** y **`NODE_DOMAIN` no** → mDNS o “DNS privado” en Android.
    - Si **por IP no entra** → casi seguro **firewall en el PC del nodo** (`sudo ufw allow 80/tcp` y `443/tcp` si aplica) o el router con **aislamiento de clientes / AP isolation** (impide que dos Wi‑Fi vean el puerto 80 entre sí). Revisá el panel del router (GALATEA u otro).
 3. **Las tres en la misma SSID no alcanza** si el AP separa clientes: algunos routers tienen “Wi‑Fi para invitados” o VLAN distinta; todas deben estar en la **misma red L2** sin aislamiento.
-4. **Mismo router, dos bandas (2,4 GHz y 5 GHz):** a veces solo una banda tiene **aislamiento de clientes** activo o reglas distintas. Si `pimienta.local` o la IP del nodo **no responden en la red 5G** pero **sí en la 2,4 GHz** (`GALATEAWIFI` vs `GALATEAWIFI5G` u otros nombres), unificá PC y celulares en la banda que funcione o desactivá el aislamiento en el panel del router para la SSID de 5 GHz.
+4. **Mismo router, dos bandas (2,4 GHz y 5 GHz):** a veces solo una banda tiene **aislamiento de clientes** activo o reglas distintas. Si `NODE_DOMAIN` o la IP del nodo **no responden en la red 5G** pero **sí en la 2,4 GHz** (`GALATEAWIFI` vs `GALATEAWIFI5G` u otros nombres), unificá PC y celulares en la banda que funcione o desactivá el aislamiento en el panel del router para la SSID de 5 GHz.
 
-## mDNS (`pimienta.local` desde otras máquinas)
+## mDNS (`NODE_DOMAIN` desde otras máquinas)
 
-- **`LAN_MDNS=1`** en `.env` y volver a correr **`./ops/bootstrap-with-restore.sh`** (o solo `./ops/setup-lan-mdns.sh --install-service`) instala el servicio **`pimienta-mdns`**. Sin eso, `pimienta.local` suele resolver solo en la PC del nodo.
+- **`LAN_MDNS=1`** en `.env` y volver a correr **`./ops/bootstrap-with-restore.sh`** (o solo `./ops/setup-lan-mdns.sh --install-service`) instala el servicio **`pimienta-mdns`**. Sin eso, `NODE_DOMAIN` suele resolver solo en la PC del nodo.
 - El runner del servicio **re-detecta la IPv4 cada 60s** (versiones recientes del script): si el router cambió la IP por DHCP, en hasta ~1 minuto se vuelve a publicar la nueva. Tras **actualizar** el repo, conviene **`sudo systemctl restart pimienta-mdns`** o re-ejecutar **`--install-service`** para escribir el runner nuevo en `/usr/local/lib/`.
 - **`avahi-daemon`** debe estar activo: `systemctl is-active avahi-daemon`. Paquetes: `avahi-daemon` y `avahi-utils`.
 - Diagnóstico: `./ops/setup-lan-mdns.sh` (sin argumentos) muestra IP detectada y si el servicio está activo.
@@ -42,21 +44,21 @@ El gateway sirve **`/favicon.ico`** y **`/favicon.png`** en **puerto 80 y 443** 
 ## Checklist: “¿por qué no entra desde el celular?”
 
 1. **Misma Wi‑Fi** que la máquina del nodo (no datos móviles).  
-2. **Resolución de nombre:** `pimienta.local` requiere mDNS en muchos móviles.  
+2. **Resolución de nombre:** `NODE_DOMAIN` requiere mDNS en muchos móviles.  
    - En la PC: `systemctl status pimienta-mdns`, `journalctl -u pimienta-mdns -n 30`.  
    - Si la IP del nodo cambió por DHCP: `sudo systemctl restart pimienta-mdns` o `./ops/setup-lan-mdns.sh --install-service` (reinstala runner y reinicia el servicio).  
 3. **Probar por IP:** `http://192.168.x.x/` (mismo puerto que el gateway). Si por IP funciona y por nombre no → **mDNS**.  
-   - Si **al abrir por IP** la barra cambia a `pimienta.local` y aparece **NXDOMAIN**: la wiki redirigía al host fijo de `MW_SERVER`. Dejá **`MW_SERVER` vacío** en `.env` (o borrá la línea), `docker compose up -d --force-recreate wiki`, y volvé a probar por IP.  
-4. **DNS privado (Android):** con “DNS privado” activo, `pimienta.local` a veces no resuelve por mDNS. Probar **Desactivado** o seguir usando **IP** con `MW_SERVER` vacío.  
+   - Si **al abrir por IP** la barra cambia a `NODE_DOMAIN` y aparece **NXDOMAIN**: la wiki redirigía al host fijo de `MW_SERVER`. Dejá **`MW_SERVER` vacío** en `.env` (o borrá la línea), `docker compose up -d --force-recreate wiki`, y volvé a probar por IP.  
+4. **DNS privado (Android):** con “DNS privado” activo, `NODE_DOMAIN` a veces no resuelve por mDNS. Probar **Desactivado** o seguir usando **IP** con `MW_SERVER` vacío.  
 5. **Router con aislamiento de clientes (AP isolation):** impide tráfico entre dispositivos; desactivar en el AP si es posible.  
-6. **Puerto 80 u otro:** si usás `GATEWAY_HTTP_PORT=8088`, la URL es `http://pimienta.local:8088` (o `http://<IP>:8088`). Si definís `MW_SERVER`, debe coincidir con host y puerto; si lo dejás vacío, la wiki sigue el host que escribe el navegador.
+6. **Puerto 80 u otro:** si usás `GATEWAY_HTTP_PORT=8088`, la URL es `http://<NODE_DOMAIN>:8088` (o `http://<IP>:8088`). Si definís `MW_SERVER`, debe coincidir con host y puerto; si lo dejás vacío, la wiki sigue el host que escribe el navegador.
 
 ## Chat (Converse)
 
 | Síntoma | Causa probable | Qué hacer |
 |---------|----------------|-----------|
 | Pantalla en blanco / no carga tras el cartel | JS o assets 404 | Revisar que `/chat/vendor/` exista y nginx sirva estáticos. |
-| Entra pero al poner apodo se queda cargando | **`crypto.subtle` undefined** | Abrir **`https://pimienta.local/chat/`** (o `https://host:puerto/chat/`), aceptar certificado autofirmado. No usar solo `http://` salvo `localhost`. Desde la **landing**, usá el botón Chat (muestra antes el aviso sobre el certificado). |
+| Entra pero al poner apodo se queda cargando | **`crypto.subtle` undefined** | Abrir **`https://<NODE_DOMAIN>/chat/`** (o `https://host:puerto/chat/`), aceptar certificado autofirmado. No usar solo `http://` salvo `localhost`. Desde la **landing**, usá el botón Chat (muestra antes el aviso sobre el certificado). |
 | WebSocket cierra enseguida | Proxy o Prosody | Logs: `docker compose logs prosody gateway`; comprobar `wss://` cuando la página es HTTPS. |
 
 Avisos habituales en consola (si el chat **funciona**): mapas de fuente faltantes, notificaciones sin gesto de usuario, carbons no soportados, fuentes TTF rechazadas por el navegador — en general **no bloquean** el uso.

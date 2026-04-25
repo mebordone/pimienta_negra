@@ -59,10 +59,10 @@ pimienta_negra/
 
 ## Pruebas manuales mínimas tras un cambio de infra
 
-1. `http://pimienta.local/` (landing: credenciales bajo Archivos; Chat abre modal y luego HTTPS).  
-2. `http://pimienta.local/wiki/` (wiki con estilos y navegación).  
-3. `https://pimienta.local/chat/` (chat usable).  
-4. `http://pimienta.local/archivos/` (login FileBrowser).  
+1. `http://<NODE_DOMAIN>/` (landing: credenciales bajo Archivos; Chat abre modal y luego HTTPS).
+2. `http://<NODE_DOMAIN>/wiki/` (wiki con estilos y navegación).
+3. `https://<NODE_DOMAIN>/chat/` (chat usable).
+4. `http://<NODE_DOMAIN>/archivos/` (login FileBrowser).
 5. Opcional: `./tests/run-all.sh` o `./ops/verify-stack.sh` (CI en `.github/workflows/stack-tests.yml` en `main`).
 
 ## Dónde pedir ayuda

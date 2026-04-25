@@ -4,7 +4,7 @@ Fork de [Proyecto Aguaribay (Pimienta Rosa)](https://github.com/mebordone/pimien
 
 ## En 30 segundos
 
-Pimienta Negra es un nodo comunitario para eventos, barrios o espacios educativos que funciona en red local. La idea es que cualquier persona en la LAN pueda abrir `pimienta.local` y, desde la **landing** en `/`, acceder a tres servicios. En esa portada, bajo **Archivos**, se muestran las credenciales del usuario invitado de FileBrowser (por defecto `pimienta` / `pimienta`, configurables vía `config.json` o `.env`). El botón **Chat** abre un aviso sobre el certificado HTTPS local antes de ir a `https://…/chat/`.
+Pimienta Negra es un nodo comunitario para eventos, barrios o espacios educativos que funciona en red local. La idea es que cualquier persona en la LAN pueda abrir `NODE_DOMAIN` (por defecto `pimienta.local`) y, desde la **landing** en `/`, acceder a tres servicios. En esa portada, bajo **Archivos**, se muestran las credenciales del usuario invitado de FileBrowser (por defecto `pimienta` / `pimienta`, configurables vía `config.json` o `.env`). El botón **Chat** abre un aviso sobre el certificado HTTPS local antes de ir a `https://…/chat/`.
 
 - **Wiki** (`/wiki/`) para documentar, escribir notas y dejar comentarios.
 - **Chat** (`/chat/`) para anuncios y coordinación en tiempo real.
@@ -22,9 +22,9 @@ Pimienta Negra es un nodo comunitario para eventos, barrios o espacios educativo
 - **Backup y restore de wiki** (base de datos + contenido) para recuperar rapido el nodo.
 - **Bootstrap de inicio** para que alguien descargue el repo, ejecute un script y deje todo funcionando casi de una.
 - **Migracion de chat liviana**: se reemplazo Synapse/Mattermost + Postgres por Prosody + Converse.
-- **Acceso unificado** por rutas en `pimienta.local` (`/`, `/wiki/`, `/chat/`, `/archivos/`) en vez de depender de puertos.
+- **Acceso unificado** por rutas en `NODE_DOMAIN` (`/`, `/wiki/`, `/chat/`, `/archivos/`) en vez de depender de puertos.
 - **FileBrowser** con usuarios configurables para compartir archivos en la red local.
-- **mDNS persistente** para resolver `pimienta.local` desde otras compus/celulares en la LAN.
+- **mDNS persistente** para resolver `NODE_DOMAIN` desde otras compus/celulares en la LAN.
 - **Landing en `/`** (HTML estático + `config.json`: nombre, descripción, logo, credenciales invitado opcionales, modal previo al chat) y **wiki en `/wiki/`** vía nginx y `$wgScriptPath`.
 - **Identidad visual unificada** (favicon) entre wiki, chat y archivos.
 - **Suite de tests** (`tests/run-all.sh`, `verify-stack.sh`) y **CI** en GitHub Actions para validar compose y HTTP del gateway.
@@ -143,13 +143,15 @@ sudo ./ops/instalar_dependencias.sh
 
 # 3. Configurar contraseñas y acceso LAN
 cp .env.example .env
-nano .env          # Editá FILEBROWSER_*_PASSWORD y descomentá LAN_MDNS=1
+nano .env          # Editá NODE_DOMAIN, FILEBROWSER_*_PASSWORD y LAN_MDNS=1
 
 # 4. Primer arranque (hace todo: certificados, Docker, wiki, mDNS LAN)
 ./ops/bootstrap-with-restore.sh
 ```
 
-Con **`LAN_MDNS=1`** en `.env`, el paso 3 instala automáticamente un servicio **systemd persistente** que publica `pimienta.local` en la red via Avahi: funciona desde el arranque del sistema, sin correr nada extra. Desde cualquier celular u otra PC en la misma Wi‑Fi podés abrir directamente `http://pimienta.local/`.
+Con **`LAN_MDNS=1`** en `.env`, el paso 3 instala automáticamente un servicio **systemd persistente** que publica `NODE_DOMAIN` en la red via Avahi: funciona desde el arranque del sistema, sin correr nada extra. Desde cualquier celular u otra PC en la misma Wi‑Fi podés abrir directamente `http://<NODE_DOMAIN>/`.
+
+Importante: `NODE_DOMAIN` se define para el **primer arranque**. Cambiarlo luego con datos existentes (especialmente `data/prosody` y `data/prosody-certs`) no está soportado; hacé instalación limpia.
 
 ---
 
@@ -165,7 +167,7 @@ Resumen: hace falta **Docker** y el subcomando **`docker compose`** (v2). Si `ap
 
 ### Acceso desde otros dispositivos (LAN_MDNS)
 
-Con `LAN_MDNS=1` en `.env` el bootstrap instala un servicio systemd usando **Avahi** que anuncia `pimienta.local`, `accounts.pimienta.local` y `conference.pimienta.local` en la Wi‑Fi. Requisito: `avahi-daemon` y `avahi-utils` instalados (`sudo apt install avahi-daemon avahi-utils`).
+Con `LAN_MDNS=1` en `.env` el bootstrap instala un servicio systemd usando **Avahi** que anuncia `NODE_DOMAIN`, `accounts.<NODE_DOMAIN>` y `conference.<NODE_DOMAIN>` en la Wi‑Fi. Requisito: `avahi-daemon` y `avahi-utils` instalados (`sudo apt install avahi-daemon avahi-utils`).
 
 Otras opciones: DNS en el router o solo IP; detalles en `./ops/setup-lan-mdns.sh --help`.
 
@@ -175,15 +177,16 @@ Copiá [proyecto_pimienta/.env.example](proyecto_pimienta/.env.example) a `proye
 
 | Variable | Default | Descripción |
 |----------|---------|-------------|
+| `NODE_DOMAIN` | `pimienta.local` | Dominio principal del nodo. Se usa para generar config de nginx/prosody/converse, certificados y mDNS. Definir antes del primer bootstrap. |
 | `MYSQL_ROOT_PASS` | `pimienta_rosa` | Contraseña del usuario root de MariaDB. Debe coincidir en todos los servicios; si la cambiás hacé `./ops/reset.sh` antes de volver a levantar. |
 | `GATEWAY_HTTP_PORT` | `80` | Puerto nginx en el host. Si el 80 está ocupado usá otro (ej `8088`) y, si fijás `MW_SERVER`, el mismo puerto ahí. |
 | `GATEWAY_HTTPS_PORT` | `443` | Puerto TLS del gateway: solo responde con **301 a HTTP** (cert. autofirmado de `data/prosody-certs/`). Si el 443 del host está ocupado, cambiá ambos. |
-| `MW_SERVER` | *(vacío)* | Si está vacío, la wiki usa el mismo host que escribís en el navegador (evita redirigir a `pimienta.local` cuando un celular no resuelve `.local`). Para forzar siempre el nombre: `http://pimienta.local` o con puerto `http://pimienta.local:8088`. |
+| `MW_SERVER` | *(vacío)* | Si está vacío, la wiki usa el mismo host que escribís en el navegador (evita redirigir a `NODE_DOMAIN` cuando un celular no resuelve `.local`). Para forzar siempre el nombre: `http://<NODE_DOMAIN>` o con puerto `http://<NODE_DOMAIN>:8088`. |
 | `FILEBROWSER_ADMIN_USERNAME` | `admin` | Usuario administrador de FileBrowser. |
 | `FILEBROWSER_ADMIN_PASSWORD` | valor de prueba | Mínimo 8 caracteres. |
 | `FILEBROWSER_INVITADO_USERNAME` | `pimienta` | Usuario de acceso limitado en FileBrowser. |
 | `FILEBROWSER_INVITADO_PASSWORD` | `pimienta` | Mínimo 8 caracteres (mismo valor por defecto que el usuario). |
-| `PROSODY_ADMIN_PASSWORD` | valor de prueba | Cuenta `admin@accounts.pimienta.local`. |
+| `PROSODY_ADMIN_PASSWORD` | valor de prueba | Cuenta `admin@accounts.<NODE_DOMAIN>`. |
 | `LAN_MDNS` | `0` | Poné `1` para instalar servicio Avahi persistente al final del bootstrap. |
 
 **Permisos FileBrowser:** el bootstrap crea y ajusta los permisos de `data/filebrowser/` y `archivos/` automáticamente. No hace falta `chown` manual en el primer arranque.
@@ -245,13 +248,13 @@ cp .env.example .env && nano .env   # contraseñas + LAN_MDNS=1
 
 | URL (vía gateway) | Servicio |
 |-------------------|----------|
-| `http://pimienta.local/` (o `:PUERTO`) | Landing estática (enlaces a wiki y archivos; **Chat** abre un diálogo y luego `https://…/chat/`) |
-| `http://pimienta.local/wiki/` | MediaWiki (`/wiki` redirige a `/wiki/`) |
-| `https://pimienta.local/chat/` | Converse.js (**HTTPS** por Web Crypto). `http://…/chat/` redirige con **301** a HTTPS en el gateway. |
-| `http://pimienta.local/archivos` o `.../archivos/` | FileBrowser (redirige sin barra final) |
-| `http://pimienta.local/config.json` | Config opcional de la landing (`node_name`, `node_description`, `node_logo`, opcionalmente `guest_username` / `guest_password` para el texto bajo Archivos) |
+| `http://<NODE_DOMAIN>/` (o `:PUERTO`) | Landing estática (enlaces a wiki y archivos; **Chat** abre un diálogo y luego `https://…/chat/`) |
+| `http://<NODE_DOMAIN>/wiki/` | MediaWiki (`/wiki` redirige a `/wiki/`) |
+| `https://<NODE_DOMAIN>/chat/` | Converse.js (**HTTPS** por Web Crypto). `http://…/chat/` redirige con **301** a HTTPS en el gateway. |
+| `http://<NODE_DOMAIN>/archivos` o `.../archivos/` | FileBrowser (redirige sin barra final) |
+| `http://<NODE_DOMAIN>/config.json` | Config opcional de la landing (`node_name`, `node_description`, `node_logo`, opcionalmente `guest_username` / `guest_password` para el texto bajo Archivos) |
 
-Comprobación automática (usa `pimienta.local` con `curl --resolve` hacia `127.0.0.1`, no exige que `/etc/hosts` esté bien en el momento del test):
+Comprobación automática (usa `NODE_DOMAIN` o `PIMIENTA_HOST` con `curl --resolve` hacia `127.0.0.1`, no exige que `/etc/hosts` esté bien en el momento del test):
 
 ```bash
 cd proyecto_pimienta
@@ -264,13 +267,13 @@ Tras cambios en nginx, Compose o scripts, conviene correr la suite completa:
 ./tests/run-all.sh
 ```
 
-Solo validación sin stack arriba: `./tests/run-all.sh --static-only`. Detalle en [`proyecto_pimienta/tests/README.md`](proyecto_pimienta/tests/README.md). En GitHub, el workflow [`.github/workflows/stack-tests.yml`](.github/workflows/stack-tests.yml) ejecuta tests estáticos en cada push/PR y e2e en `main`.
+Solo validación sin stack arriba: `./tests/run-all.sh --static-only` o `--unit-only`. Detalle en [`proyecto_pimienta/tests/README.md`](proyecto_pimienta/tests/README.md). En GitHub, el workflow [`.github/workflows/stack-tests.yml`](.github/workflows/stack-tests.yml) ejecuta estáticos/unitarios en PR y e2e con dominio default + alternativo en `main`.
 
 Lee `GATEWAY_HTTP_PORT` y el resto del `.env` si existe. Tras cambiar [config/nginx/default.conf](proyecto_pimienta/config/nginx/default.conf), recargá nginx: `docker compose exec gateway nginx -s reload`.
 
-- **Entrada unificada (gateway):** `http://pimienta.local/` (landing; credenciales de invitado visibles bajo Archivos), **`http://pimienta.local/wiki/`** (MediaWiki), **`https://pimienta.local/chat/`** (Converse; desde la landing el botón Chat muestra antes un aviso sobre el certificado autofirmado; aceptalo una vez en el navegador), `http://pimienta.local/archivos/` (FileBrowser). Si usás otro puerto, repetilo en HTTP/HTTPS según corresponda.
-- **Atajo:** wiki en `http://pimienta.local:8080`, FileBrowser en `http://pimienta.local:8081/archivos/` (el `baseURL` es `/archivos`, no sirve la raíz del puerto 8081 sola)
-- **Chat:** al abrir `/chat/` debería conectarse por WebSocket (en las herramientas de red del navegador, `101` en `/xmpp-websocket`). Cuenta admin XMPP: `admin@accounts.pimienta.local` (contraseña `PROSODY_ADMIN_PASSWORD`).
+- **Entrada unificada (gateway):** `http://<NODE_DOMAIN>/` (landing; credenciales de invitado visibles bajo Archivos), **`http://<NODE_DOMAIN>/wiki/`** (MediaWiki), **`https://<NODE_DOMAIN>/chat/`** (Converse; desde la landing el botón Chat muestra antes un aviso sobre el certificado autofirmado; aceptalo una vez en el navegador), `http://<NODE_DOMAIN>/archivos/` (FileBrowser). Si usás otro puerto, repetilo en HTTP/HTTPS según corresponda.
+- **Atajo:** wiki en `http://<NODE_DOMAIN>:8080`, FileBrowser en `http://<NODE_DOMAIN>:8081/archivos/` (el `baseURL` es `/archivos`, no sirve la raíz del puerto 8081 sola)
+- **Chat:** al abrir `/chat/` debería conectarse por WebSocket (en las herramientas de red del navegador, `101` en `/xmpp-websocket`). Cuenta admin XMPP: `admin@accounts.<NODE_DOMAIN>` (contraseña `PROSODY_ADMIN_PASSWORD`).
 
 ### Problema: página «Welcome to nginx!» al abrir pimienta.local
 

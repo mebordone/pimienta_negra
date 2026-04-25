@@ -60,9 +60,9 @@ Además, **`/chat/`** la sirve el mismo **nginx** desde el volumen `config/conve
 
 ## Resolución de nombres en la LAN
 
-- **`pimienta.local`** (y subdominios de chat/XMPP) en clientes que soportan **mDNS** (Avahi/Bonjour).  
+- **`NODE_DOMAIN`** (default `pimienta.local`) y subdominios de chat/XMPP en clientes que soportan **mDNS** (Avahi/Bonjour).  
 - Script: `proyecto_pimienta/ops/setup-lan-mdns.sh` (servicio systemd recomendado; la IP se recalcula al iniciar el servicio para no quedar obsoleta con DHCP).
 
 ## Variables de entorno críticas
 
-Definidas en `proyecto_pimienta/.env` (ver `.env.example`): `MW_SERVER` (opcional; vacío = la wiki usa el host de la petición), `GATEWAY_HTTP_PORT`, `GATEWAY_HTTPS_PORT`, credenciales FileBrowser y Prosody, `LAN_MDNS`, etc. Si `MW_SERVER` está fijado, debe ser **coherente** con la URL que escribe la usuaria (incluido puerto si no es 80).
+Definidas en `proyecto_pimienta/.env` (ver `.env.example`): `NODE_DOMAIN` (base de identidad del nodo), `MW_SERVER` (opcional; vacío = la wiki usa el host de la petición), `GATEWAY_HTTP_PORT`, `GATEWAY_HTTPS_PORT`, credenciales FileBrowser y Prosody, `LAN_MDNS`, etc. Si `MW_SERVER` está fijado, debe ser **coherente** con la URL que escribe la usuaria (incluido puerto si no es 80).
