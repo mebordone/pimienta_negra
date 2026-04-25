@@ -36,7 +36,7 @@ $wgScriptPath = "/wiki";
 ## - Si MW_SERVER está definido y no vacío en el contenedor → se usa tal cual (ej. http://pimienta.local).
 ## - Si MW_SERVER está vacío → se usa el mismo host (y esquema) que pidió el navegador (IP o nombre),
 ##   para que entrar por http://192.168.x.x no redirija a pimienta.local (útil si .local no resuelve).
-## - En CLI (mantenimiento) sin HTTP_HOST → http://pimienta.local
+## - En CLI (mantenimiento) sin HTTP_HOST → http://NODE_DOMAIN (default pimienta.local)
 $mwServerEnv = getenv( 'MW_SERVER' );
 if ( is_string( $mwServerEnv ) && $mwServerEnv !== '' ) {
 	$wgServer = $mwServerEnv;
@@ -49,7 +49,8 @@ if ( is_string( $mwServerEnv ) && $mwServerEnv !== '' ) {
 	}
 	$wgServer = $proto . '://' . $_SERVER['HTTP_HOST'];
 } else {
-	$wgServer = 'http://pimienta.local';
+	$nodeDomain = getenv( 'NODE_DOMAIN' ) ?: 'pimienta.local';
+	$wgServer = 'http://' . $nodeDomain;
 }
 
 ## The URL path to static resources (images, scripts, etc.)

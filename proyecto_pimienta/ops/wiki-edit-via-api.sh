@@ -7,7 +7,7 @@
 #
 # URL de la API:
 #   Por defecto: http://127.0.0.1:8080 (mapeo wiki 8080:80 del compose).
-#   Podés forzar con WIKI_API_BASE, p. ej. http://pimienta.local si el gateway
+#   Podés forzar con WIKI_API_BASE, p. ej. http://<NODE_DOMAIN> si el gateway
 #   enruta /api.php a MediaWiki (según tu nginx).
 #
 # Variables de entorno:

@@ -1,7 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-HOSTNAME="pimienta.local"
+cd "$(dirname "$0")/.."
+
+# shellcheck disable=SC1091
+source ./ops/lib/domain-env.sh
+pimienta_domain_init .env
+
+HOSTNAME="$NODE_DOMAIN"
 HOSTS_FILE="/etc/hosts"
 
 if grep -qE "^\s*[^#].*\b${HOSTNAME}\b" "$HOSTS_FILE" 2>/dev/null; then

@@ -21,6 +21,7 @@ services:
     environment:
       # Vacío = MediaWiki usa el host de la petición (IP o .local); definí MW_SERVER para forzar una URL fija.
       - MW_SERVER=${MW_SERVER:-}
+      - NODE_DOMAIN=${NODE_DOMAIN:-pimienta.local}
       - MW_DB_SERVER=db
       - MW_DB_NAME=my_wiki
       - MW_DB_USER=wikiuser
@@ -39,6 +40,7 @@ services:
       - "5280"
     environment:
       - PROSODY_ADMIN_PASSWORD=${PROSODY_ADMIN_PASSWORD:-pimienta_prosody_admin}
+      - NODE_DOMAIN=${NODE_DOMAIN:-pimienta.local}
     volumes:
       - ./config/prosody/prosody.cfg.lua:/etc/prosody/prosody.cfg.lua:ro
       - ./config/prosody/conf.d:/etc/prosody/conf.d:ro

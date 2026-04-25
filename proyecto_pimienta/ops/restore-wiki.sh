@@ -26,7 +26,8 @@ Opciones:
 
 Nota: con --backup, si el tar incluye LocalSettings.php, se copia sobre
 config/mediawiki/LocalSettings.php. El repo usa MW_SERVER (si está definido) o el
-HTTP_HOST de la petición; si el backup tiene $wgServer fijo, alinealo o recreá wiki.
+HTTP_HOST de la petición; además, el fallback CLI toma NODE_DOMAIN.
+Si el backup trae dominio fijo viejo, alinealo o hacé instalación limpia.
 EOF
 }
 

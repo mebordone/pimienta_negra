@@ -19,10 +19,10 @@ upstream prosody_http {
 
 server {
     listen 443 ssl;
-    server_name flisol.local localhost accounts.flisol.local conference.flisol.local;
+    server_name __NODE_DOMAIN__ localhost __XMPP_ACCOUNTS_DOMAIN__ __XMPP_CONFERENCE_DOMAIN__;
 
-    ssl_certificate     /etc/nginx/certs/flisol.local.crt;
-    ssl_certificate_key /etc/nginx/certs/flisol.local.key;
+    ssl_certificate     /etc/nginx/certs/__NODE_DOMAIN__.crt;
+    ssl_certificate_key /etc/nginx/certs/__NODE_DOMAIN__.key;
 
     client_max_body_size 100M;
 
@@ -48,7 +48,7 @@ server {
 
     location /http-bind {
         proxy_pass http://prosody_http/http-bind;
-        proxy_set_header Host flisol.local;
+        proxy_set_header Host __NODE_DOMAIN__;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_buffering off;
@@ -59,7 +59,7 @@ server {
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
-        proxy_set_header Host flisol.local;
+        proxy_set_header Host __NODE_DOMAIN__;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_read_timeout 600s;
@@ -80,7 +80,7 @@ server {
 server {
     # default_server: peticiones con Host = IP LAN (192.168.x.x) usan este bloque
     listen 80 default_server;
-    server_name flisol.local localhost;
+    server_name __NODE_DOMAIN__ localhost;
 
     client_max_body_size 100M;
 
@@ -106,7 +106,7 @@ server {
     # WebSocket y HTTP XMPP hacia Prosody
     location /http-bind {
         proxy_pass http://prosody_http/http-bind;
-        proxy_set_header Host flisol.local;
+        proxy_set_header Host __NODE_DOMAIN__;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_buffering off;
@@ -117,7 +117,7 @@ server {
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
-        proxy_set_header Host flisol.local;
+        proxy_set_header Host __NODE_DOMAIN__;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_read_timeout 600s;

@@ -24,20 +24,24 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+# shellcheck disable=SC1091
+source ./ops/lib/domain-env.sh
+
 # ── Cargar .env ───────────────────────────────────────────────────────────────
-if [[ -f .env ]]; then
-  set -a
-  # shellcheck disable=SC1091
-  source .env
-  set +a
-else
+pimienta_load_env .env
+if [[ ! -f .env ]]; then
   echo "Aviso: no existe .env. Copiá .env.example a .env y editá las contraseñas." >&2
   echo "  cp .env.example .env && nano .env" >&2
   echo ""
 fi
+pimienta_domain_init .env
+
+# ── 0. Renderizar configuración por dominio ──────────────────────────────────
+echo "=== [0/6] Render de configs (${NODE_DOMAIN}) ==="
+./ops/render-domain-config.sh
 
 # ── 1. Certificados Prosody ───────────────────────────────────────────────────
-echo "=== [1/5] Certificados Prosody (init-chat) ==="
+echo "=== [1/6] Certificados Prosody (init-chat) ==="
 ./ops/init-chat.sh
 
 # ── 1b. Bind mounts FileBrowser: crear dirs y asignar UID 1000 antes de montar ─
@@ -48,12 +52,12 @@ sudo chown -R 1000:1000 data/filebrowser archivos
 
 # ── 2. Levantar stack ────────────────────────────────────────────────────────
 echo ""
-echo "=== [2/5] docker compose up -d ==="
+echo "=== [2/6] docker compose up -d ==="
 docker compose up -d
 
 # ── 3. Esperar MariaDB ───────────────────────────────────────────────────────
 echo ""
-echo "=== [3/5] Esperando MariaDB ==="
+echo "=== [3/6] Esperando MariaDB ==="
 for i in $(seq 1 90); do
   if docker compose exec -T db mysqladmin ping -h localhost -uroot -p"${MYSQL_ROOT_PASS:-pimienta_rosa}" --silent 2>/dev/null; then
     echo "MariaDB lista."
@@ -67,7 +71,7 @@ done
 
 # ── 4. Restaurar wiki (antes del check HTTP: BD vacía → 500 en /) ────────────
 echo ""
-echo "=== [4/5] restore-wiki ==="
+echo "=== [4/6] restore-wiki ==="
 ./ops/restore-wiki.sh "$@"
 
 echo ""
@@ -85,9 +89,9 @@ done
 
 # ── 5. Acceso LAN (Avahi) ────────────────────────────────────────────────────
 echo ""
-echo "=== [5/5] Acceso desde la LAN ==="
+echo "=== [5/6] Acceso desde la LAN ==="
 if [[ "${LAN_MDNS:-0}" == "1" ]]; then
-  echo "LAN_MDNS=1 → instalando servicio systemd para pimienta*.local en la Wi‑Fi..."
+  echo "LAN_MDNS=1 → instalando servicio systemd para ${NODE_DOMAIN} en la Wi‑Fi..."
   if ./ops/setup-lan-mdns.sh --install-service; then
     echo "Acceso LAN configurado y persistente."
   else
@@ -96,7 +100,7 @@ if [[ "${LAN_MDNS:-0}" == "1" ]]; then
     echo "  ./ops/setup-lan-mdns.sh --install-service" >&2
   fi
 else
-  echo "pimienta.local solo resuelve en esta máquina."
+  echo "${NODE_DOMAIN} solo resuelve en esta máquina."
   echo "Para acceso desde celulares u otras PCs en la misma Wi‑Fi:"
   echo "  1) Agregá LAN_MDNS=1 en .env y volvé a correr este script, o bien:"
   echo "  2) ./ops/setup-lan-mdns.sh --install-service  (instala servicio persistente)"
@@ -110,9 +114,9 @@ echo " Listo. Verificá con:  ./ops/verify-stack.sh"
 if [[ -n "${MW_SERVER:-}" ]]; then
   MW_BASE="$MW_SERVER"
 else
-  MW_BASE="http://pimienta.local (o http://<IP-LAN> — mismo host en barra si MW_SERVER vacío)"
+  MW_BASE="http://${NODE_DOMAIN} (o http://<IP-LAN> — mismo host en barra si MW_SERVER vacío)"
 fi
-CHAT_HINT="https://pimienta.local/chat/ (o https://<IP-LAN>/chat/ — mismo host que el gateway)"
+CHAT_HINT="https://${NODE_DOMAIN}/chat/ (o https://<IP-LAN>/chat/ — mismo host que el gateway)"
 echo " Landing:  ${MW_BASE}/"
 echo " Wiki:     ${MW_BASE}/wiki/"
 echo " Chat:     ${CHAT_HINT}   (HTTPS — requerido en muchos navegadores/celulares)"

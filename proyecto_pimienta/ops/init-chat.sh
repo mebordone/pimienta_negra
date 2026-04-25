@@ -3,8 +3,17 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+# shellcheck disable=SC1091
+source ./ops/lib/domain-env.sh
+pimienta_domain_init .env
+
+./ops/render-domain-config.sh
+
 CERT_DIR="./data/prosody-certs"
 mkdir -p "$CERT_DIR" ./data/prosody
+STATE_FILE="./data/.node_domain"
+
+pimienta_enforce_domain_state "$STATE_FILE" ./data/prosody ./data/prosody-certs
 
 gen_cert() {
   local cn="$1"
@@ -25,7 +34,7 @@ gen_cert() {
   chmod 640 "$key" 2>/dev/null || true
 }
 
-for d in pimienta.local accounts.pimienta.local conference.pimienta.local; do
+for d in "$NODE_DOMAIN" "$XMPP_ACCOUNTS_DOMAIN" "$XMPP_CONFERENCE_DOMAIN"; do
   gen_cert "$d"
 done
 
@@ -40,6 +49,8 @@ if docker info >/dev/null 2>&1; then
 else
   echo "Aviso: Docker no disponible; asegurate de que data/prosody y data/prosody-certs pertenezcan al UID ${PROSODY_UID}." >&2
 fi
+
+pimienta_write_domain_state "$STATE_FILE"
 
 echo "Listo. Certificados en $CERT_DIR"
 echo "Levantá el stack con: docker compose up -d"

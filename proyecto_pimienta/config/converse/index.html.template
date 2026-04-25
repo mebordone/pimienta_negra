@@ -25,13 +25,13 @@
         discover_connection_methods: false,
         websocket_url: wsUrl,
         bosh_service_url: boshUrl,
-        jid: 'flisol.local',
-        muc_domain: 'conference.flisol.local',
-        locked_muc_domain: 'conference.flisol.local',
+        jid: '__NODE_DOMAIN__',
+        muc_domain: '__XMPP_CONFERENCE_DOMAIN__',
+        locked_muc_domain: '__XMPP_CONFERENCE_DOMAIN__',
         auto_join_rooms: [
-          'general@conference.flisol.local',
-          'maestranza@conference.flisol.local',
-          'asamblea@conference.flisol.local'
+          'general@__XMPP_CONFERENCE_DOMAIN__',
+          'maestranza@__XMPP_CONFERENCE_DOMAIN__',
+          'asamblea@__XMPP_CONFERENCE_DOMAIN__'
         ],
         play_sounds: false,
         show_controlbox_by_default: true,
