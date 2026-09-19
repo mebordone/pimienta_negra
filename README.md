@@ -2,6 +2,8 @@
 
 Fork de [Proyecto Aguaribay (Pimienta Rosa)](https://github.com/mebordone/pimienta_negra) que extiende el nodo comunitario autohospedado con herramientas de operación, backup y un portal de archivos.
 
+![Landing del nodo en http://pimienta.local — Wiki, Chat y Archivos](docs/assets/landing.png)
+
 ## En 30 segundos
 
 Pimienta Negra es un nodo comunitario para eventos, barrios o espacios educativos que funciona en red local. La idea es que cualquier persona en la LAN pueda abrir `NODE_DOMAIN` (por defecto `pimienta.local`) y, desde la **landing** en `/`, acceder a tres servicios. En esa portada, bajo **Archivos**, se muestran las credenciales del usuario invitado de FileBrowser (por defecto `pimienta` / `pimienta`, configurables vía `config.json` o `.env`). El botón **Chat** abre un aviso sobre el certificado HTTPS local antes de ir a `https://…/chat/`.
