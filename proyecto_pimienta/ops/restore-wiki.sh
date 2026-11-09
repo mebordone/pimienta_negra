@@ -121,9 +121,37 @@ tmp_sql="$(mktemp -t pimienta_wiki_only.XXXXXX.sql)"
 tmp_pre="$(mktemp -t pimienta_wiki_pre.XXXXXX.sql)"
 trap 'rm -f "$tmp_sql" "$tmp_pre"; [[ -n "${tmp_dir:-}" ]] && rm -rf "$tmp_dir"' EXIT
 
+wait_for_mysql() {
+  local i
+  for i in $(seq 1 60); do
+    if docker compose exec -T db mysqladmin ping -h 127.0.0.1 -u"${mysql_root_user}" -p"${mysql_root_pass}" --silent 2>/dev/null; then
+      return 0
+    fi
+    sleep 1
+  done
+  echo "Timeout esperando MariaDB antes del restore." >&2
+  return 1
+}
+
+echo "Esperando MariaDB..."
+wait_for_mysql
+
 echo "Reiniciando base de datos my_wiki..."
-docker compose exec -T db mysql -h 127.0.0.1 -u"${mysql_root_user}" -p"${mysql_root_pass}" \
-  -e "DROP DATABASE IF EXISTS my_wiki; CREATE DATABASE my_wiki DEFAULT CHARACTER SET utf8mb4 DEFAULT COLLATE utf8mb4_unicode_ci;"
+mysql_ok=0
+for i in $(seq 1 10); do
+  if docker compose exec -T db mysql -h 127.0.0.1 -u"${mysql_root_user}" -p"${mysql_root_pass}" \
+    -e "DROP DATABASE IF EXISTS my_wiki; CREATE DATABASE my_wiki DEFAULT CHARACTER SET utf8mb4 DEFAULT COLLATE utf8mb4_unicode_ci;"; then
+    mysql_ok=1
+    break
+  fi
+  echo "MariaDB aún no acepta DDL (intento $i/10); reintento..."
+  sleep 2
+  wait_for_mysql || true
+done
+if [[ "$mysql_ok" -ne 1 ]]; then
+  echo "No se pudo recrear la base my_wiki." >&2
+  exit 1
+fi
 
 echo "Preprocesando collation UCA (si existe) y filtrando bloque my_wiki..."
 # Eliminamos las líneas que restauran variables SET @OLD_* (TIME_ZONE, SQL_MODE, etc.):
