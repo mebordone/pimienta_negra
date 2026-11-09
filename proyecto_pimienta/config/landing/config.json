@@ -1,5 +1,7 @@
 {
-  "node_name": "Wiki Pimienta",
-  "node_description": "Nodo comunitario: documentación en la wiki, chat en tiempo real y archivos compartidos en la red local.",
-  "node_logo": "/assets/logo.png"
+  "node_name": "Copiona en Creative Commons 25 años",
+  "node_description": "Puesto de feria para copiar y compartir cultura libre. Conectate, abrí esta página y llevate (o subí) lo que quieras.",
+  "node_logo": "/assets/logo-cc25.png",
+  "guest_username": "pimienta",
+  "guest_password": "pimienta"
 }

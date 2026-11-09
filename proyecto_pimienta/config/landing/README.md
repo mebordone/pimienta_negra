@@ -2,6 +2,8 @@
 
 Sirve la página de entrada del gateway. Los textos y el logo opcional se cargan desde `config.json` vía `fetch('/config.json')`; si falla la red, se muestran los valores por defecto del HTML.
 
+En el branch de evento **Copiona CC25**, la portada usa branding del festival (`logo-cc25.png`, instrucciones `COPIONA-CC2` / `copiona.local`) y destaca **Archivos** como acción principal. Ver [docs/eventos/copiona-cc25.md](../../../docs/eventos/copiona-cc25.md).
+
 ## Logo (`assets/logo.png`)
 
 Copia local del ícono de Wiki Pimienta (mismo archivo que `config/mediawiki/images/wiki_burbuja_135x135.png` y base del favicon del gateway). Se sirve como **`/assets/logo.png`** desde nginx (`config/landing/assets/`), **sin depender de que la wiki esté levantada**. Si cambiás el branding, actualizá la copia, por ejemplo desde `proyecto_pimienta/`:

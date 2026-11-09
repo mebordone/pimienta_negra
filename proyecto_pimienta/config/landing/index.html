@@ -3,59 +3,84 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Wiki Pimienta</title>
-  <link rel="stylesheet" href="/landing.css">
+  <title>Copiona en Creative Commons 25 años</title>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <link rel="stylesheet" href="/landing.css?v=cc25-2">
 </head>
-<body id="pimienta-landing" data-pimienta-landing>
-  <header class="hero">
-    <img class="hero-logo" id="landing-logo" src="/assets/logo.png" alt="Wiki Pimienta" width="135" height="135">
-    <h1 id="landing-title">Wiki Pimienta</h1>
-    <p class="hero-desc" id="landing-desc">Nodo comunitario: documentación en la wiki, chat en tiempo real y archivos compartidos en la red local.</p>
-  </header>
+<body id="pimienta-landing" class="landing-cc25" data-pimienta-landing>
+  <div class="cc25-page">
+    <header class="cc25-hero">
+      <img class="cc25-hero__logo" id="landing-logo" src="/assets/logo-cc25.png" alt="Creative Commons 25 años" width="180" height="225">
+      <p class="cc25-eyebrow">copiona.local · LibreBase</p>
+      <h1 id="landing-title">Copiona en Creative Commons 25 años</h1>
+      <p class="hero-desc" id="landing-desc">
+        Puesto de feria para copiar y compartir cultura libre. Conectate, abrí esta página y llevate (o subí) lo que quieras.
+      </p>
+    </header>
 
-  <main>
-    <h2 class="visually-hidden">Accesos</h2>
-    <ul class="cards">
-      <li><a class="card" href="/wiki/">Wiki</a></li>
-      <li>
-        <button type="button" class="card card--as-button" id="landing-chat-open"
-          aria-haspopup="dialog" aria-controls="chat-warn-dialog">
-          Chat
-        </button>
-      </li>
-      <li class="card-cell-archivos">
-        <a class="card" href="/archivos/">Archivos</a>
-        <p class="card-guest-credentials" id="landing-guest-credentials" aria-live="polite">Usuario: pimienta · Contraseña: pimienta</p>
-      </li>
-    </ul>
-  </main>
+    <main class="cc25-main">
+      <section class="howto" aria-labelledby="howto-title">
+        <h2 id="howto-title" class="howto__title">Cómo usar la Copiona</h2>
+        <ol class="howto__steps">
+          <li>Conectate a la Wi‑Fi <strong>COPIONA-CC2</strong></li>
+          <li>Abrí <strong>http://copiona.local</strong></li>
+          <li>Entrá a <strong>Archivos</strong> y bajá o subí contenidos</li>
+          <li>Si el nombre no abre: usá <strong>http://&lt;IP&gt;/</strong> (está en el cartel)</li>
+        </ol>
+      </section>
 
-  <footer class="site-footer">
-    <div class="footer-brand">
-      <img class="footer-logo" src="/assets/logo.png" width="64" height="64" alt="" decoding="async">
-      <div class="footer-brand-text">
-        <p class="footer-lead">
-          <strong>Nodo Pimienta Negra</strong> — software libre y documentación en
-          <a href="https://github.com/mebordone/pimienta_negra" rel="noopener noreferrer">GitHub (pimienta_negra)</a>.
-        </p>
-        <p class="footer-lineage">
-          Basado en el proyecto <strong>Aguaribay / Pimienta Rosa</strong>:
-          <a href="https://github.com/redconectividadfeministaresile-alt/pimienta_rosa/tree/main/proyecto_pimienta" rel="noopener noreferrer">código en GitHub</a>.
-        </p>
+      <div class="archivos-block">
+        <a class="cta-archivos" href="/archivos/">
+          Archivos libres
+          <span class="cta-archivos__arrow" aria-hidden="true">→</span>
+        </a>
+        <p class="archivos-hint">Libros, música, audios, videos y fotos con licencias libres. También podés subir.</p>
+        <p class="archivos-creds" id="landing-guest-credentials" aria-live="polite">Usuario: pimienta · Contraseña: pimienta</p>
       </div>
-    </div>
-    <section class="footer-principles" aria-labelledby="footer-principles-heading">
-      <h2 id="footer-principles-heading" class="footer-principles-title">Principios del nodo</h2>
-      <ul>
-        <li><strong>Soberanía tecnológica:</strong> no somos usuarias pasivas; somos maestras de nuestras propias herramientas.</li>
-        <li><strong>Memoria territorial:</strong> aquí guardamos el saber y las historias del territorio para que el tiempo no los borre.</li>
-        <li><strong>Cuidado colectivo:</strong> lo que se escribe fortalece la red; nos cuidamos entre nosotras y cuidamos la red que nos comunica.</li>
-      </ul>
-      <blockquote class="footer-quote">
-        <p>La tecnología es nuestra cuando la entendemos y la ponemos al servicio de la vida en el territorio.</p>
-      </blockquote>
-    </section>
-  </footer>
+
+      <section class="explore" aria-labelledby="explore-title">
+        <h2 id="explore-title" class="explore__title">Explorá el nodo</h2>
+        <p class="explore__hint">Además de la copiona, este puesto es un nodo Pimienta Negra completo.</p>
+        <div class="links-bar">
+          <a class="link-chip" href="/wiki/">Wiki</a>
+          <button type="button" class="link-chip link-chip--btn" id="landing-chat-open"
+            aria-haspopup="dialog" aria-controls="chat-warn-dialog">
+            Chat
+          </button>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p class="footer-event">
+        Festival <strong>Creative Commons 25 años</strong> · espacio Copiona / Burn Station.
+      </p>
+      <div class="footer-brand">
+        <img class="footer-logo" src="/assets/logo.png" width="64" height="64" alt="" decoding="async">
+        <div class="footer-brand-text">
+          <p class="footer-lead">
+            <strong>Nodo Pimienta Negra</strong> — software libre y documentación en
+            <a href="https://github.com/mebordone/pimienta_negra" rel="noopener noreferrer">GitHub (pimienta_negra)</a>.
+          </p>
+          <p class="footer-lineage">
+            Basado en el proyecto <strong>Aguaribay / Pimienta Rosa</strong>:
+            <a href="https://github.com/redconectividadfeministaresile-alt/pimienta_rosa/tree/main/proyecto_pimienta" rel="noopener noreferrer">código en GitHub</a>.
+          </p>
+        </div>
+      </div>
+      <section class="footer-principles" aria-labelledby="footer-principles-heading">
+        <h2 id="footer-principles-heading" class="footer-principles-title">Principios del nodo</h2>
+        <ul>
+          <li><strong>Soberanía tecnológica:</strong> no somos usuarias pasivas; somos maestras de nuestras propias herramientas.</li>
+          <li><strong>Memoria territorial:</strong> aquí guardamos el saber y las historias del territorio para que el tiempo no los borre.</li>
+          <li><strong>Cuidado colectivo:</strong> lo que se escribe fortalece la red; nos cuidamos entre nosotras y cuidamos la red que nos comunica.</li>
+        </ul>
+        <blockquote class="footer-quote">
+          <p>La tecnología es nuestra cuando la entendemos y la ponemos al servicio de la vida en el territorio.</p>
+        </blockquote>
+      </section>
+    </footer>
+  </div>
 
   <dialog class="chat-warn-dialog" id="chat-warn-dialog" aria-labelledby="chat-warn-title">
     <div class="chat-warn-dialog__inner">
@@ -82,7 +107,7 @@
       var chatDialog = document.getElementById('chat-warn-dialog');
       var chatCancelBtn = document.getElementById('chat-warn-cancel');
       var chatConfirmBtn = document.getElementById('chat-warn-confirm');
-      var defaultLogoSrc = '/assets/logo.png';
+      var defaultLogoSrc = '/assets/logo-cc25.png';
       var chatUrl = 'https://' + window.location.hostname + '/chat/';
 
       function resolveLogoUrl(value) {
@@ -142,7 +167,7 @@
         });
       }
 
-      fetch('/config.json', { credentials: 'same-origin' })
+      fetch('/config.json?v=cc25-1', { credentials: 'same-origin', cache: 'no-store' })
         .then(function (r) { return r.ok ? r.json() : Promise.reject(new Error('config')); })
         .then(applyConfig)
         .catch(function () { /* defaults in HTML */ });
