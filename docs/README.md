@@ -10,6 +10,7 @@ Material para quienes **despliegan, mantienen o desarrollan** el nodo. El inicio
 | [Guía para quienes desarrollan](contribucion.md) | Estructura del repo, convenciones, scripts `ops/`, backups de wiki. |
 | [Tests del stack](../proyecto_pimienta/tests/README.md) | `tests/run-all.sh`: compose, shellcheck opcional, smoke HTTP (landing, `/wiki/`, chat, archivos, `config.json`). |
 | [Landing (`config/landing`)](../proyecto_pimienta/config/landing/README.md) | Página en `/`, `config.json`, logo, credenciales invitado opcionales y modal previo al chat; detalle en `config/landing/README.md` y en [operación — sección Landing](operacion-y-troubleshooting.md). |
+| [Copiona CC25](eventos/copiona-cc25.md) | Checklist del puesto Copiona / Burn Station (router `COPIONA-CC2`, `copiona.local`, disco Elements). |
 
 El [Roadmap](../Roadmap.md) sigue siendo el lugar de **funcionalidades planificadas** (panel admin, instalador, modo AP, etc.).
 
