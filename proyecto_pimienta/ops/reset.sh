@@ -34,7 +34,7 @@ echo "╚═══════════════════════�
 echo ""
 echo "Se borrarán:"
 echo "  • Contenedores y volúmenes Docker del stack"
-echo "  • data/  (filebrowser, mediawiki, prosody, prosody-certs)"
+echo "  • data/  (filebrowser, mediawiki, prosody, prosody-certs, .node_domain)"
 echo "  • archivos/  (contenido servido por FileBrowser)"
 if [[ "$PURGE" -eq 1 ]]; then
   echo "  • Imágenes Docker del stack  (--purge)"
@@ -63,6 +63,7 @@ sudo rm -rf \
   data/mediawiki \
   data/prosody \
   data/prosody-certs \
+  data/.node_domain \
   archivos
 
 echo ""
