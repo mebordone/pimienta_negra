@@ -1,0 +1,10 @@
+# Copiá este archivo a docker-compose.override.yml en la notebook del puesto.
+# Docker Compose lo aplica automáticamente sobre docker-compose.yml.
+#
+# Sirve Contenidos Libres del disco externo en FileBrowser (/archivos/).
+# Ajustá la ruta de la izquierda si el disco monta en otro path.
+
+services:
+  filebrowser:
+    volumes:
+      - "/media/mebordone/Elements/Contenidos Libres:/srv"

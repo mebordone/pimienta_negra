@@ -11,6 +11,9 @@ __pycache__/
 # Variables locales (contraseñas FileBrowser, Prosody, etc.)
 proyecto_pimienta/.env
 
+# Override local de Compose (paths de disco / evento; usar .example versionado)
+proyecto_pimienta/docker-compose.override.yml
+
 # Contenido de FileBrowser en el host (solo se versiona .gitkeep)
 proyecto_pimienta/archivos/*
 !proyecto_pimienta/archivos/.gitkeep
