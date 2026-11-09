@@ -1,11 +1,11 @@
 -- Pimienta Negra: Prosody para chat XMPP en LAN (HTTP + WebSocket, sin MAM).
--- Dominios: flisol.local (anónimo), accounts.flisol.local (cuentas + admin), MUC en conference.flisol.local
+-- Dominios: copiona.local (anónimo), accounts.copiona.local (cuentas + admin), MUC en conference.copiona.local
 
 pidfile = "/var/run/prosody/prosody.pid";
 
 plugin_paths = { "/usr/lib/prosody/modules/" }
 
-admins = { "admin@accounts.flisol.local" }
+admins = { "admin@accounts.copiona.local" }
 
 modules_enabled = {
 	"disco";
@@ -46,31 +46,31 @@ s2s_require_encryption = false
 consider_broken_secure_connection = true
 consider_websocket_secure = true
 
-VirtualHost "flisol.local"
+VirtualHost "copiona.local"
 	authentication = "anonymous"
 	allow_registration = false
 	ssl = {
-		certificate = "/etc/prosody/certs/flisol.local.crt";
-		key = "/etc/prosody/certs/flisol.local.key";
+		certificate = "/etc/prosody/certs/copiona.local.crt";
+		key = "/etc/prosody/certs/copiona.local.key";
 	}
 
-VirtualHost "accounts.flisol.local"
+VirtualHost "accounts.copiona.local"
 	authentication = "internal_hashed"
 	allow_registration = true
 	ssl = {
-		certificate = "/etc/prosody/certs/accounts.flisol.local.crt";
-		key = "/etc/prosody/certs/accounts.flisol.local.key";
+		certificate = "/etc/prosody/certs/accounts.copiona.local.crt";
+		key = "/etc/prosody/certs/accounts.copiona.local.key";
 	}
 
-Component "conference.flisol.local" "muc"
+Component "conference.copiona.local" "muc"
 	restrict_room_creation = false
 	muc_room_default_public = true
 	muc_room_default_persistent = false
 	muc_room_default_members_only = false
 	muc_room_default_allow_member_invites = true
 	ssl = {
-		certificate = "/etc/prosody/certs/conference.flisol.local.crt";
-		key = "/etc/prosody/certs/conference.flisol.local.key";
+		certificate = "/etc/prosody/certs/conference.copiona.local.crt";
+		key = "/etc/prosody/certs/conference.copiona.local.key";
 	}
 
 Include "/etc/prosody/conf.d/*.cfg.lua"
